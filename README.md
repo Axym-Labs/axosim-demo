@@ -1,101 +1,64 @@
-# AxoSim embodied fly demo
+# AxoSim scientific fly demonstration — in development
 
-An articulated fruit fly in MuJoCo, with an AxoSim neural backend, multiview videos, and reproducible behavioral experiments. This is a fork of [NeuroMechFly / FlyGym](https://github.com/NeLy-EPFL/flygym); [upstream provenance](UPSTREAM.md) and Apache-2.0 attribution are retained.
+This project forks [NeuroMechFly / FlyGym](https://github.com/NeLy-EPFL/flygym) to investigate a scientific AxoSim fly simulation. **No controller-free, scientifically validated fly-behavior demo is implemented yet.**
 
-The first implementation contains three distinct experiments:
+The earlier walking videos used an engineered odor-to-steering rule and a hybrid CPG controller. The proposed flight controller used an upstream RL policy, and grooming was recorded-motion replay. These do not meet the project's scientific requirement and are retired from the demo path. [Archived engineering notes](docs/ENGINEERING_PROTOTYPE.md) retain provenance; they are not scientific results. `python -m axosim_demo fly-demo` rejects the unsupported path explicitly rather than falling back to a controller.
 
-- **Embodied adaptation:** a small, trained AxoSim-Lite motif learns odor–reward association through dopamine-gated contact efficacy updates. Its outputs influence a walking fly. Videos combine third-person body view, a thorax-mounted first-person perspective, and measured diagnostics.
-- **Original grooming-circuit baseline:** unmodified Shiu Brian2 code runs all 127,400 neurons and 14,687,178 released weighted edges. Three seeds reproduce stronger aBN1 activation from JO-C/E than JO-F stimulation.
-- **Exact graph audit:** all released edges are imported without pruning and routed on GPU. The audit compares against a CPU reference and reports memory, including the cost of rectangular padding.
+An acceptable embodied demonstration must use AxoSim for the neural dynamics and connect measured sensory physiology, the appropriate neural graph, motor-neuron outputs, and a defensible neuromuscular/body model. An engineered steering rule, gait oscillator, behavior selector, trajectory follower, RL motor layer or replay cannot supply the behavior being claimed.
 
-**The current video uses the reduced motif, not the full connectome.** The pretrained neuronal surrogate was trained on mammalian morphologies. Its use here is an engineering starting point, not validated fly physiology. The inherited controller supplies leg movements; navigation uses synthetic odor concentrations and known source bearings. Full-connectome AxoSim coupling and embodied foreleg grooming are the next implementation milestones.
+## What currently has evidence
 
-## Install
+- **Numerical AxoSim integration and sparse equivalence.** Persistent trained-Lite execution, morphology adaptation, contact efficacies and causal forecast alignment are checked against reference interfaces. The sparse change preserves contact operations without pruning; it does not alter the separate fused path underlying technical-report Figure 5.
+- **Retrospective neuronal comparison.** On four existing mammalian NEURON validation traces, frozen Lite obtained 2.985 mV clipped-voltage RMSE versus 3.299/3.767 mV for train-fitted LIF baselines, and spike F1 within 5 ms of 0.476 versus 0/0.342. This is a small retrospective panel; prior checkpoint exposure is unverified. It establishes neither fly physiology nor architecture-only superiority.
+- **Original Shiu neural benchmark.** Unmodified Brian2 code simulates all 127,400 released neurons and 14,687,178 weighted edges. Three seeds reproduce stronger aBN1 activation from JO-C/E than JO-F stimulation. This is the original LIF model, not an AxoSim fly model.
+- **Exact connectome routing audit.** Released edges are retained, integer identities checked, and GPU routing compared against a CPU reference. This does not measure a complete adaptive brain/body run.
+- **Visual infrastructure.** Imported woodland geometry, static anatomical previews, full-frame composition, the Axym website's Inter font, actual TikZ/PGFPlots overlays, and camera framing that reserves space for the overlay. Static scene previews demonstrate assets, not behavior.
 
-Use Python 3.12 on Linux for the tested headless configuration:
+## Install and run the supported checks
+
+Use Python 3.12 on Linux:
 
 ```bash
 uv venv --python 3.12 .venv
 uv pip install --python .venv/bin/python -r requirements-demo.lock
 uv pip install --python .venv/bin/python --no-deps -e .
+.venv/bin/python -m axosim_demo --help
 ```
 
-The dependency lock pins the AxoSim sparse-event improvement. FlyGym's upstream `uv.lock` is retained for its own examples; use `requirements-demo.lock` for these experiments.
-
-## Record a working body demo
-
-```bash
-MUJOCO_GL=egl .venv/bin/python -m axosim_demo \
-  --backend body --duration 1.5 --output demo-runs/body
-```
-
-This produces `demo.mp4`, `preview.png`, `metadata.json`, and `telemetry.npz`. The 1280×720 video plays 1.5 simulated seconds over six seconds at 0.25× speed. The first-person perspective is cinematic, not a compound-eye neural sensor.
-
-## Prepare graph and neural checkpoint
-
-```bash
-.venv/bin/python scripts/prepare_axosim_demo.py
-```
-
-Graph and original reference code download from an immutable Shiu commit and are checked against SHA-256 digests. Inputs remain in ignored `data/`.
-
-The AxoSim video additionally requires the evaluated Lite checkpoint. It is retained with the run evidence in the private companion repository, `01-embodied-fly/artifacts/neural/axosim-lite-t24-s8.pt`; it is not bundled in this public fork. Stage it explicitly:
+The dependency lock pins the original sparse-event fix. The required trained checkpoint is retained in the private companion repository and is not bundled publicly. There is no random-weight fallback:
 
 ```bash
 .venv/bin/python scripts/prepare_axosim_demo.py \
   --checkpoint-source /path/to/axosim-lite-t24-s8.pt
+.venv/bin/python -m axosim_demo neuron-fidelity \
+  --data /path/to/retrospective-neuron-traces --output /path/to/results
+.venv/bin/python -m axosim_demo shiu-benchmark \
+  --seeds 0 1 2 --output /path/to/shiu-results
+.venv/bin/python -m axosim_demo connectome-audit \
+  --download --device cuda --output /path/to/memory-audit.json
 ```
 
-Expected SHA-256: `19a045bf5b62ca92ab547934ca031e31f464ff2421f0d07b60d8278189889626`. A missing or different checkpoint fails explicitly; there is no random-model fallback.
+Checkpoint SHA-256: `19a045bf5b62ca92ab547934ca031e31f464ff2421f0d07b60d8278189889626`. It is a **mammalian-trained** Lite model; no validated fly checkpoint was found. The current 1-ms/P4 neural contract also cannot silently stand in for the original Shiu model's 0.1-ms integration and fractional-ms delay/refractory values.
 
-## Condition and record the AxoSim fly
+Static woodland infrastructure can be inspected without running a behavior controller:
 
 ```bash
-.venv/bin/python -m axosim_demo.conditioning \
-  --seeds 3 --output demo-runs/conditioning.json
-MUJOCO_GL=egl .venv/bin/python -m axosim_demo \
-  --conditioning demo-runs/conditioning.json --arm paired \
-  --seed 0 --rewarded-cue 0 --output demo-runs/conditioned
+MUJOCO_GL=egl .venv/bin/python -m axosim_demo scene-preview --output /path/to/static-preview
 ```
 
-Repeat with `--arm frozen`, `unpaired`, or `dopamine_blocked`; use `--rewarded-cue 1` to test reversed pairing. Training uses imposed KC activity and a reward-to-DAN pulse abstraction, with a causal eligibility trace acting on actual AxoSim contact efficacies. Shared neuronal weights stay frozen. Test videos contain no reward or plasticity. This is a mechanism demonstration, not a competitive biological-learning score.
+The bundled CC0 scene has seven imported pine trees, ferns, bark, a stump and mossy rock. Its visual props have no contact forces, the physical ground remains flat, and native MuJoCo rendering is not photorealistic. The clean stills have no simulated activity or plot overlay. Source hashes, licenses, conversions and visual geometry reductions are recorded in `assets/forest_scene/`.
 
-## Reproduce the original grooming-circuit baseline
+TikZ overlays require `tectonic` and Poppler's `pdftocairo`. `axosim_demo.tikz_plot` compiles axes and traces separately, preserving vector exports and revealing recorded samples progressively. The compositor keeps full-frame footage, uses a translucent frosted backdrop, and shows only `AxoSim - Axym Labs` as the title. Inter's OFL and source pin are included with its font asset. Plot labels identify native outputs; they do not invent calibrated fly firing rates.
 
-```bash
-.venv/bin/python -m axosim_demo.shiu_benchmark \
-  --seeds 0 1 2 --output demo-runs/shiu
-```
-
-The pinned protocol preserves original neuron equations, weights, delays, integration, and every graph edge. At 100 Hz stimulation, measured aBN1 rates were 26/28/25 Hz for JO-C/E and zero for JO-F. Descending aDN1 recruitment was only 0/1/0 Hz at this setting, so this is not an embodied grooming reproduction. The paper used 30 repeats and broader sweeps; three seeds are an initial replication.
-
-## Audit connectivity memory
+## Tests and research record
 
 ```bash
-.venv/bin/python -m axosim_demo.audit --download --device cuda \
-  --output demo-runs/memory-audit.json
-```
-
-On the RTX 5090, the full graph routing audit peaked at 353,513,472 allocated bytes and matched the CPU sum exactly on its binary test input. That is routing only; it does not measure a complete adaptive brain/body run. The importer preserves integer root IDs, signed counts, duplicate rows, and independent efficacy per released row. A released weighted edge already aggregates anatomical contacts; no contact-specific locations are invented.
-
-## Verify
-
-```bash
-uv pip install --python .venv/bin/python pytest pytest-cov
-MUJOCO_GL=egl .venv/bin/python -m pytest tests/test_axosim_*.py -q -o addopts=''
+uv pip install --python .venv/bin/python pytest pytest-cov build setuptools wheel
 MUJOCO_GL=egl .venv/bin/python -m pytest \
-  --ignore=tests/warp -m 'not warp and not rl and not tutorial and not network' \
-  -q -o addopts=''
+  tests/test_axosim_*.py tests/test_neuron_fidelity.py \
+  tests/test_tikz_plot.py tests/test_scene_overlay.py -q -o addopts=''
 ```
 
-The second command covers the inherited CPU/body implementation. Warp, RL, notebook, and live-network suites require their optional environments. Detailed research, original prompt/specification, raw measurements, videos, and provenance are in the private [axosim-demo-internal](https://github.com/DavideWiest/axosim-demo-internal) companion repository.
+Engineering-body tests verify infrastructure only. They do not turn its retired controller into a scientific model. Optional Warp/RL/tutorial/network suites require their own environments.
 
-## Scientific sources
-
-- [Shiu et al. 2024: computational brain model and original code](https://github.com/philshiu/Drosophila_brain_model)
-- [NeuroMechFly v2](https://www.nature.com/articles/s41592-024-02497-y)
-- [Özdil et al. 2026: antennal grooming coordination](https://www.nature.com/articles/s41467-026-72152-x)
-- [Eon's technical description of the viral demonstration](https://eon.systems/updates/embodied-brain-emulation)
-- [Hige et al. 2015: dopamine-dependent mushroom-body plasticity](https://www.sciencedirect.com/science/article/pii/S0896627315009824)
-
-The original FlyGym documentation remains in [docs/UPSTREAM_README.md](docs/UPSTREAM_README.md).
+The private [axosim-demo-internal](https://github.com/DavideWiest/axosim-demo-internal) repository contains the original prompt, subsequent corrections, task specification, literature/code audits, raw measurements, and clearly categorized artifacts. The current scientific boundary supersedes earlier video descriptions. See [upstream attribution](UPSTREAM.md) and [original FlyGym documentation](docs/UPSTREAM_README.md).

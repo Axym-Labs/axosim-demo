@@ -1,0 +1,133 @@
+{
+  "license": "CC0-1.0",
+  "license_url": "https://polyhaven.com/license",
+  "collection": "https://polyhaven.com/collections/pine_forest",
+  "sources": [
+    {
+      "file": "fern_02/fern_02.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/fern_02/fern_02_1k.gltf",
+      "sha256": "33974295ee19670af4877705fc7d91f33f42d6302f0d44a625e072271223031f",
+      "bytes": 6899
+    },
+    {
+      "file": "fern_02/textures/fern_02_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fern_02/fern_02_diff_1k.jpg",
+      "sha256": "a828a6e7b4c01c826911e2eac4b3afc7457dab7b3b392a31c681ed88b7d50029",
+      "bytes": 315705
+    },
+    {
+      "file": "fern_02/fern_02.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/fern_02/fern_02.bin",
+      "sha256": "fe1abb762bcbbc7ad9e86925c8080437a62add257d9280e9142fdc85c226e64c",
+      "bytes": 176176
+    },
+    {
+      "file": "tree_stump_01/tree_stump_01.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/tree_stump_01/tree_stump_01_1k.gltf",
+      "sha256": "9c66ba87d693f35eb404acaa96e0eeff831c295b61a0a903795584cbcc3527c9",
+      "bytes": 2793
+    },
+    {
+      "file": "tree_stump_01/tree_stump_01.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/tree_stump_01/tree_stump_01.bin",
+      "sha256": "b4d9ca70b3c908c4a638fbd6a23ed96c84055bbbf14cf44b89e31ad59fa21e0a",
+      "bytes": 965380
+    },
+    {
+      "file": "tree_stump_01/textures/tree_stump_01_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_stump_01/tree_stump_01_diff_1k.jpg",
+      "sha256": "781ebe420ac4d84f2e44b9e9937a596e3d5d90711d978a1392f8bf3771b5bf31",
+      "bytes": 907451
+    },
+    {
+      "file": "rock_moss_set_01/rock_moss_set_01.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/rock_moss_set_01/rock_moss_set_01_1k.gltf",
+      "sha256": "c36675aca9c6b2be7785c2534cf413b03ec82a5a2a5407a2b1c0cdb0346c9727",
+      "bytes": 9987
+    },
+    {
+      "file": "rock_moss_set_01/rock_moss_set_01.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/rock_moss_set_01/rock_moss_set_01.bin",
+      "sha256": "de8360e6175879aaf02c171911069cf5f1852547f9ca7f10e440085dbcc3315e",
+      "bytes": 1466380
+    },
+    {
+      "file": "rock_moss_set_01/textures/rock_moss_set_01_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_moss_set_01/rock_moss_set_01_diff_1k.jpg",
+      "sha256": "40cea65d8aa4ee73a93b04af19963834d061eee9779c3fc2c1cba76eef812ccc",
+      "bytes": 168099
+    },
+    {
+      "file": "bark_debris_01/bark_debris_01.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/bark_debris_01/bark_debris_01_1k.gltf",
+      "sha256": "478d222823c79a48c3eb58c2bbb91c81073dd28ce5f307b0d5a1467bd2e4e28b",
+      "bytes": 7646
+    },
+    {
+      "file": "bark_debris_01/bark_debris_01.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/bark_debris_01/bark_debris_01.bin",
+      "sha256": "c22b98d6c42741cf9002b237c386d62e10fb90ce11210d974ae179bba9490a17",
+      "bytes": 4869268
+    },
+    {
+      "file": "bark_debris_01/textures/bark_debris_01_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/bark_debris_01/bark_debris_01_diff_1k.jpg",
+      "sha256": "43cd69bf736a3847e09b5454684c0ec5acc20c1d1d5a96401a9bac5be98378bf",
+      "bytes": 967420
+    },
+    {
+      "file": "pine_tree_01/pine_tree_01.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/pine_tree_01/pine_tree_01_1k.gltf",
+      "sha256": "c81e8eebbda722313f07bed37b8b9156ce520f7fa95488d83a694d02fffdb469",
+      "bytes": 30596
+    },
+    {
+      "file": "pine_tree_01/textures/pine_tree_01_bark_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_tree_01/pine_tree_01_bark_diff_1k.jpg",
+      "sha256": "5c76836b01c3536fa0e24207b67bf4f3315b53ebe2b4ecc6f08dfcf3f8d74929",
+      "bytes": 725265
+    },
+    {
+      "file": "pine_tree_01/textures/pine_tree_01_trunk_a_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_tree_01/pine_tree_01_trunk_a_diff_1k.jpg",
+      "sha256": "cfb646cbc4b6cb2db410eb4342174ebe7812a4ae03520491e788722cf1867286",
+      "bytes": 789806
+    },
+    {
+      "file": "pine_tree_01/textures/pine_tree_01_twig_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_tree_01/pine_tree_01_twig_diff_1k.jpg",
+      "sha256": "e649f0f9bc74d1af5f1a45eaf2fe7a29adaaddfab251f746b983da301e4b80e1",
+      "bytes": 510932
+    },
+    {
+      "file": "pine_tree_01/textures/pine_tree_01_trunk_b_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_tree_01/pine_tree_01_trunk_b_diff_1k.jpg",
+      "sha256": "9d39263a9243a4b6cd669de5e3a504eae32d52f5ab48e471cad5f7e52e052508",
+      "bytes": 687662
+    },
+    {
+      "file": "pine_tree_01/pine_tree_01.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/pine_tree_01/pine_tree_01.bin",
+      "sha256": "9955ac7e2f8fe28dc6da8e4d478593ad830f8a23d44e39a2187ef7dffac2646b",
+      "bytes": 948849556
+    },
+    {
+      "file": "forest_leaves_02/diffuse.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/forest_leaves_02/forest_leaves_02_diffuse_4k.jpg",
+      "sha256": "e713aa7e0d7cf16705dd3ad5c32d72e5495b45957b5264a3f3b448111e9e9178",
+      "bytes": 5749081
+    },
+    {
+      "file": "forest_slope/panorama.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/forest_slope.jpg",
+      "sha256": "d6ed6cbd2458979198403cd63f6774308eb49571b8f637da47339cad7339589a",
+      "bytes": 15259265
+    },
+    {
+      "file": "fern_02/textures/fern_02_alpha_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/fern_02/fern_02_alpha_1k.png",
+      "sha256": "ea3c64284c7ebdeedf484d2d816eae92825ec526140c3bb83859ddc7a64001f9",
+      "bytes": 114589
+    }
+  ]
+}

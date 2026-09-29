@@ -30,4 +30,4 @@ jobs:
           MUJOCO_GL: egl
         # Private trained-weight tests skip explicitly when the checkpoint is
         # absent. Their locally executed evidence lives in the internal repo.
-        run: .venv/bin/python -m pytest tests/test_axosim_*.py -q -o addopts=''
+        run: .venv/bin/python -m pytest tests/test_axosim_*.py tests/test_neuron_fidelity.py tests/test_tikz_plot.py tests/test_scene_overlay.py -q -o addopts=''

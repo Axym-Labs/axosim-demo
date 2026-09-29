@@ -1,0 +1,63 @@
+{
+  "license_url": "https://polyhaven.com/license",
+  "assets": [
+    {
+      "file": "food_apple_01.gltf",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/food_apple_01/food_apple_01_2k.gltf",
+      "sha256": "751d0c3cd4bcae4cd7c74553763107cc8211d000f3017f5a58b34fd0e08d2e61",
+      "license": "CC0-1.0",
+      "runtime": true
+    },
+    {
+      "file": "textures/food_apple_01_nor_gl_2k.jpg",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/food_apple_01/food_apple_01_nor_gl_2k.jpg",
+      "sha256": "d023ebdcd22d495d80d1137b47072e023724a34bf4b6459e5b2bf37ecaa46df1",
+      "license": "CC0-1.0",
+      "runtime": false
+    },
+    {
+      "file": "textures/food_apple_01_diff_2k.jpg",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/food_apple_01/food_apple_01_diff_2k.jpg",
+      "sha256": "c66c46d57f5b5c8129dc36a766401e48223651a83a75e694179ec182586d2e41",
+      "license": "CC0-1.0",
+      "runtime": false
+    },
+    {
+      "file": "textures/food_apple_01_rough_2k.jpg",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/food_apple_01/food_apple_01_rough_2k.jpg",
+      "sha256": "b7b0cd4dda6660c9d47446ca98809bb3535f176a3bc03e9f0a700335253dfc31",
+      "license": "CC0-1.0",
+      "runtime": false
+    },
+    {
+      "file": "food_apple_01.bin",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/food_apple_01/food_apple_01.bin",
+      "sha256": "f14ff9647fdd9f5a59ef325f94154e91f1f14cc2563cd3fb572c4fe9ce5756ca",
+      "license": "CC0-1.0",
+      "runtime": true
+    },
+    {
+      "file": "wood_table_001_diff_16k.jpg",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/16k/wood_table_001/wood_table_001_diff_16k.jpg",
+      "sha256": "4333ff1bea3d8f5db34e0ee8f925e712ac7c72912b91a1e2f6d06decae60d05c",
+      "license": "CC0-1.0",
+      "runtime": false
+    }
+  ],
+  "preprocessing": {
+    "tabletop_crop.png": {
+      "source": "wood_table_001_diff_16k.jpg",
+      "pixel_box": [
+        6144,
+        6144,
+        10240,
+        10240
+      ],
+      "source_extent_mm": 1500,
+      "crop_extent_mm": 375,
+      "sha256": "1ee6cab5dbf53560dabe98e998038010cd8e31e9b5df5596dcb1db345401977b"
+    },
+    "mesh": "glTF +Y up -> MuJoCo +Z up; metres -> millimetres; apple scaled to65% (~64mm wide)"
+  },
+  "source_cache": "data/natural_scene (ignored; reconstructable from pinned URLs and hashes)"
+}

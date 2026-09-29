@@ -3,6 +3,8 @@
 The trained checkpoint is a mammalian neuronal surrogate. The input routes,
 olfactory motif and motor decoding here are engineering hypotheses, not an
 empirical fly connectome or a validated fly neuron model.
+The navigation controller is a retired engineering prototype, not an accepted
+scientific demonstration. PersistentPopulation remains a tested numerical adapter.
 """
 from __future__ import annotations
 
@@ -90,18 +92,21 @@ class OdorNavigationController:
 
     label = "AxoSim: reduced dopamine-conditioned odor motif"
 
-    def __init__(self, log_efficacy=None, *, checkpoint=DEFAULT_CHECKPOINT, device="cpu"):
+    def __init__(self, log_efficacy=None, *, checkpoint=DEFAULT_CHECKPOINT, device="cpu", backend=None):
         self.label = ("AxoSim: reduced dopamine-conditioned odor motif" if log_efficacy is not None
                       else "AxoSim: reduced odor motif / unconditioned")
-        self.backend = PersistentPopulation(checkpoint, neurons=4, device=device)
+        self.backend = backend if backend is not None else PersistentPopulation(checkpoint, neurons=4, device=device)
         if log_efficacy is not None:
             values = torch.as_tensor(log_efficacy, device=self.backend.device, dtype=torch.float32)
-            if values.shape != (16,):
-                raise ValueError("log_efficacy must contain 16 KC contact parameters")
+            if values.shape != (16,) or not torch.isfinite(values).all():
+                raise ValueError("log_efficacy must contain 16 finite KC contact parameters")
             with torch.no_grad():
                 self.backend.population.synaptic_log_efficacy[0].copy_(values)
                 self.backend.population.synaptic_log_efficacy[2].copy_(values)
         self.metadata = dict(self.backend.metadata)
+        self.metadata['contact_log_efficacy_sha256'] = hashlib.sha256(
+            self.backend.population.synaptic_log_efficacy.detach().cpu().numpy().astype('<f4').tobytes()
+        ).hexdigest()
         self.metadata.update({"mode": "reduced_motif", "native_dt_seconds": .001,
                               "forecast_block_seconds": .004, "adaptation_during_video": False,
                               "conditioned_weights_loaded": log_efficacy is not None,
@@ -140,6 +145,9 @@ class OdorNavigationController:
         return {"command": command, "diagnostics": {
             "odor_A": float(odors[0]), "odor_B": float(odors[1]),
             "learned_value_A": float(value[0]), "learned_value_B": float(value[1]),
+            "neural_soma_A": float(self.last_output[0, 1]),
+            "neural_soma_B": float(self.last_output[2, 1]),
+            "forecast_warmup": time_seconds < .004,
             "AxoSim_soma_A": float(self.last_output[0, 1]),
             "AxoSim_soma_B": float(self.last_output[2, 1]),
             "AxoSim_forecast_A": float(self.last_output[0, 0]),

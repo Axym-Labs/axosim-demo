@@ -143,6 +143,7 @@ include-package-data = false
 where = ["src"]
 
 [tool.setuptools.package-data]
+axosim_demo = ["assets/**"]
 # List every bundled asset explicitly to reliably get them into the wheel/sdist.
 # Larger data files excluded below are instead fetched lazily from an S3 bucket at
 # runtime (see ``flygym.utils.assets_lazy_loading``).

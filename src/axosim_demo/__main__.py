@@ -1,47 +1,33 @@
-"""Record the embodied fly with a body baseline or conditioned AxoSim backend."""
+"""Scientific evidence and visual infrastructure for a future AxoSim fly model.
+
+The earlier engineered steering/CPG recordings are retired engineering prototypes,
+not scientific AxoSim fly demonstrations. No implicit body-controller fallback.
+"""
 import argparse
-import json
-import os
-from pathlib import Path
+import importlib
+import sys
+
+COMMANDS={
+    'neuron-fidelity':'axosim_demo.neuron_fidelity',
+    'connectome-audit':'axosim_demo.audit',
+    'shiu-benchmark':'axosim_demo.shiu_benchmark',
+    'scene-preview':'axosim_demo.scene_preview',
+}
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--duration', type=float, default=1.5, help='Simulated seconds; footage is 0.25x')
-    parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--backend', choices=['body', 'axosim'], default='axosim')
-    parser.add_argument('--checkpoint', type=Path)
-    parser.add_argument('--conditioning', type=Path, help='JSON from axosim_demo.conditioning')
-    parser.add_argument('--rewarded-cue', type=int, choices=[0,1], default=0)
-    parser.add_argument('--arm', choices=['paired','unpaired','frozen','dopamine_blocked'], default='paired')
-    args = parser.parse_args()
-    if args.backend == 'body' and args.conditioning:
-        parser.error('--conditioning requires --backend axosim')
-    os.environ.setdefault('MUJOCO_GL', 'egl')
-    from .body import record_demo
-    controller = None
-    if args.backend == 'axosim':
-        from .neural import DEFAULT_CHECKPOINT, OdorNavigationController
-        checkpoint = args.checkpoint or DEFAULT_CHECKPOINT
-        if not checkpoint.exists():
-            parser.error('AxoSim-Lite checkpoint required; pass --checkpoint or use --backend body. See README.')
-        log_efficacy = None
-        selected = None
-        if args.conditioning:
-            runs = json.loads(args.conditioning.read_text())['runs']
-            selected = next((r for r in runs if r['seed'] == args.seed and r['rewarded_cue'] == args.rewarded_cue), None)
-            if selected is None:
-                parser.error('No conditioning run matches seed and rewarded cue')
-            log_efficacy = selected['arms'][args.arm]['log_efficacy']
-        controller = OdorNavigationController(log_efficacy, checkpoint=checkpoint)
-        controller.metadata.update({'conditioning_arm': args.arm if selected else None,
-                                    'conditioning_seed': args.seed if selected else None,
-                                    'rewarded_cue': args.rewarded_cue if selected else None,
-                                    'conditioned_weights_loaded': selected is not None})
-    paths = record_demo(args.output, duration=args.duration, seed=args.seed, controller=controller)
-    print(json.dumps({k:str(v) for k,v in paths.items()},indent=2))
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('command',choices=[*COMMANDS,'fly-demo'],nargs='?')
+    args=parser.parse_args(sys.argv[1:2])
+    remaining=sys.argv[2:]
+    if args.command is None:
+        parser.print_help()
+        return
+    if args.command=='fly-demo':
+        parser.error('Scientific fly embodiment is not implemented: a fly-calibrated neural model and validated neuron-to-muscle/sensory coupling are required. Engineered steering, CPG, RL motor policies and motion replay are not accepted substitutes.')
+    module=importlib.import_module(COMMANDS[args.command])
+    sys.argv=[f'axosim_demo {args.command}',*remaining]
+    module.main()
 
 
-if __name__ == '__main__':
-    main()
+if __name__=='__main__':main()
