@@ -37,6 +37,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+axosim-demo = [
+    "axosim @ git+https://github.com/Axym-Labs/axosim.git@4b63f65729fee4eb0f92bb08d548dfe6f84435d6",
+    "pandas==3.0.6",
+    "pyarrow==25.0.1",
+    "brian2==2.10.1",
+    "joblib==1.5.3",
+]
 warp = [
     "warp-lang>=1.14,<1.15",
     "mujoco_warp>=3.9,<3.10",
@@ -88,6 +95,11 @@ rl = [
     # tensorboard still imports pkg_resources, which setuptools removed in 81.
     "setuptools<81",
 ]
+
+[project.scripts]
+axosim-demo = "axosim_demo.__main__:main"
+axosim-demo-audit = "axosim_demo.audit:main"
+axosim-demo-condition = "axosim_demo.conditioning:main"
 
 [project.urls]
 homepage = "https://neuromechfly.org/"
