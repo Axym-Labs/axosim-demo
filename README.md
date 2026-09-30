@@ -2,6 +2,8 @@
 
 This fork of [NeuroMechFly / FlyGym](https://github.com/NeLy-EPFL/flygym) runs a frozen pretrained AxoSim neuron model on the exact expanded FlyVis visual-circuit graph. The current demonstration measures neural responses directly; it contains no gait controller, steering rule, replay, behavior state machine, motor decoder, or simulated behavioral claim.
 
+The two-minute film and interpretability results are published in [Finding Visual Dynamics in a Simulated Fly Brain](https://axym.org/work/axosim-fly-geometry/).
+
 ## Current result
 
 The current display cohort contains **1,000 natural photographs**—500 from ImageNet-1k and 500 licensed research-grade iNaturalist observations spanning 494 species. Each moves in 12 known directions across the 721-column fly retinal lattice, producing 12,000 trials. Every trial runs the full 45,669-cell / 1,513,231-edge graph and records all 5,768 T4a–d and T5a–d neurons. AxoSim output channel 1 is converted back to soma membrane voltage with `V_mV = output / 0.1 - 67.7`.
