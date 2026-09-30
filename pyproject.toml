@@ -104,7 +104,6 @@ rl = [
 [project.scripts]
 axosim-demo = "axosim_demo.__main__:main"
 axosim-demo-audit = "axosim_demo.audit:main"
-axosim-demo-condition = "axosim_demo.conditioning:main"
 
 [project.urls]
 homepage = "https://neuromechfly.org/"

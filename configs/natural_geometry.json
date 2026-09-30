@@ -1,0 +1,152 @@
+{
+  "scope": "Goodfire-style neural geometry of AxoSim soma voltages under controlled optic flow from natural images",
+  "goodfire_references": [
+    "https://www.goodfire.com/research/phylogeny-manifold",
+    "https://www.goodfire.com/research/bsf-vision"
+  ],
+  "vision_config": "configs/flyvis_moving_edge.json",
+  "scored_summary": "data/vision_axosim/summary.json",
+  "checkpoint": "data/checkpoints/axosim-lite-t24-s8.pt",
+  "flyvis_root": "data/flyvis",
+  "input_root": "data/phylogeny_manifold",
+  "output_root": "data/natural_geometry",
+  "seed": 20260930,
+  "images_per_source": 500,
+  "analysis_images_per_source": 30,
+  "development_images_per_source": 24,
+  "record_layers": [
+    "T4a",
+    "T4b",
+    "T4c",
+    "T4d",
+    "T5a",
+    "T5b",
+    "T5c",
+    "T5d"
+  ],
+  "stimulus": {
+    "directions_degrees": [
+      0,
+      30,
+      60,
+      90,
+      120,
+      150,
+      180,
+      210,
+      240,
+      270,
+      300,
+      330
+    ],
+    "dt_seconds": 0.004,
+    "gray_frames": 20,
+    "motion_frames": 60,
+    "average_final_frames": 30,
+    "travel_pixels": 48.0,
+    "image_size_pixels": 384,
+    "retinal_radius_fraction": 0.4,
+    "gray_level": 0.5,
+    "soma_bias_mv": -67.7,
+    "soma_scale_per_mv": 0.1
+  },
+  "analysis": {
+    "pca_components": 50,
+    "umap_neighbors": 24,
+    "umap_min_dist": 0.12,
+    "subspace_dimensions": 10,
+    "subspace_steps": 700,
+    "subspace_learning_rate": 0.003,
+    "subspace_reconstruction_weight": 0.003,
+    "pair_batch_size": 4096,
+    "geometry_representation": "per-layer spatial mean and standard deviation",
+    "bootstrap_replicates": 2000,
+    "raw_activation_umap": {
+      "n_neighbors": 90,
+      "min_dist": 0.4,
+      "metric": "cosine",
+      "selection": "highest joint trustworthiness and canvas occupancy among six display candidates"
+    },
+    "learned_subspace_umap": {
+      "n_neighbors": 10,
+      "min_dist": 0.08,
+      "metric": "cosine",
+      "init": "random",
+      "selection": "highest trustworthiness and lowest circular-neighbor error among six display candidates"
+    }
+  },
+  "analysis_image_ids": {
+    "imagenet": {
+      "development": [
+        "0039/00000152.jpg",
+        "0067/00014113.jpg",
+        "0123/00008155.jpg",
+        "0204/00016688.jpg",
+        "0238/00017277.jpg",
+        "0249/00028213.jpg",
+        "0278/00011623.jpg",
+        "0306/00023896.jpg",
+        "0342/00023374.jpg",
+        "0354/00006199.jpg",
+        "0421/00002800.jpg",
+        "0525/00002426.jpg",
+        "0545/00002874.jpg",
+        "0571/00002048.jpg",
+        "0686/00002340.jpg",
+        "0746/00021658.jpg",
+        "0834/00011478.jpg",
+        "0848/00003441.jpg",
+        "0899/00020856.jpg",
+        "0934/00000810.jpg",
+        "0963/00006413.jpg",
+        "0964/00006788.jpg",
+        "0976/00012388.jpg",
+        "0987/00011593.jpg"
+      ],
+      "final": [
+        "0622/00028007.jpg",
+        "0712/00015531.jpg",
+        "0729/00011607.jpg",
+        "0807/00018109.jpg",
+        "0902/00004455.jpg",
+        "0916/00022113.jpg"
+      ]
+    },
+    "inaturalist": {
+      "development": [
+        "1006/1010",
+        "10313/21693",
+        "1055/1050",
+        "10863/22454",
+        "11031/22661",
+        "1149/1174",
+        "13927/27398",
+        "16286/31006",
+        "20895/36944",
+        "25023/45169",
+        "28197/50174",
+        "2838/3897",
+        "28608/50692",
+        "28612/50698",
+        "31594/54588",
+        "4720/9136",
+        "4997/9238",
+        "60239/93296",
+        "7442/16418",
+        "79022/116691",
+        "8150/18113",
+        "8909/19161",
+        "9046/19396",
+        "9564/20618"
+      ],
+      "final": [
+        "11257/22991",
+        "41039/68058",
+        "44161/71409",
+        "5514/580133",
+        "58760/91353",
+        "98854/143394"
+      ]
+    }
+  }
+}
