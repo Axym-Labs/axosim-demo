@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from axosim_demo.natural_manifold import _causal_smooth_path
 from axosim_demo.vision_axosim import _pearson, _resample, _spatial_target_control
 
 
@@ -26,3 +27,14 @@ def test_spatial_control_preserves_target_types_and_degree_multiset():
         mask = target_type == value
         np.testing.assert_array_equal(np.sort(shuffled[mask]), np.sort(target[mask]))
     assert not np.array_equal(shuffled, target)
+
+
+def test_display_path_smoothing_is_causal_and_continuous():
+    points = np.zeros((8, 3), dtype=np.float32)
+    points[4:, 0] = 10
+    result = _causal_smooth_path(points, dt=0.025, time_constant_seconds=0.18)
+
+    np.testing.assert_array_equal(result[:4], 0)
+    assert 0 < result[4, 0] < 10
+    assert np.all(np.diff(result[4:, 0]) > 0)
+    np.testing.assert_array_equal(result[:, 1:], 0)

@@ -11,8 +11,8 @@ import time as time_module
 
 import imageio.v2 as imageio
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
-from scipy.ndimage import map_coordinates
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from scipy.ndimage import gaussian_filter, map_coordinates
 
 from .neural import DEFAULT_CHECKPOINT
 from .tikz_plot import FONT_PATH
@@ -143,24 +143,28 @@ def _classify_scene(activity, time, contract):
     }
 
 
-def _embed_neurons(activity, time, contract):
+def _embed_states(activity, time, contract):
+    """Embed population states, so every manifold point is one moment in time."""
     from sklearn.decomposition import PCA
     from sklearn.manifold import trustworthiness
     import umap
 
     cfg = contract["embedding"]
     step = int(round(cfg["sample_seconds"] / contract["source_dt_seconds"]))
-    mask = time[::step] >= contract["warmup_seconds"]
-    # scene,time,layer,cell -> layer,cell,scene*time
+    sampled_time = time[::step]
+    mask = sampled_time >= contract["warmup_seconds"]
+    sampled_time = sampled_time[mask]
     sampled = activity[:, ::step][:, mask]
-    fingerprints = sampled.transpose(2, 3, 0, 1).reshape(2884, -1).astype(np.float64)
-    mean = fingerprints.mean(axis=1, keepdims=True)
-    std = fingerprints.std(axis=1, keepdims=True)
-    constant = std[:, 0] < 1e-8
+    states = sampled.reshape(-1, sampled.shape[-2] * sampled.shape[-1]).astype(
+        np.float64
+    )
+    mean = states.mean(axis=0, keepdims=True)
+    std = states.std(axis=0, keepdims=True)
+    constant = std[0] < 1e-8
     standardized = np.divide(
-        fingerprints - mean,
+        states - mean,
         std,
-        out=np.zeros_like(fingerprints),
+        out=np.zeros_like(states),
         where=std >= 1e-8,
     )
     pca = PCA(
@@ -177,16 +181,17 @@ def _embed_neurons(activity, time, contract):
         random_state=int(cfg["random_seed"]),
         n_jobs=1,
     )
-    embedding = reducer.fit_transform(pca_values).astype(np.float32)
+    flat_embedding = reducer.fit_transform(pca_values).astype(np.float32)
     quality = float(
         trustworthiness(
             pca_values,
-            embedding,
+            flat_embedding,
             n_neighbors=int(cfg["trustworthiness_neighbors"]),
         )
     )
-    return embedding, pca_values, {
-        "constant_neurons": int(constant.sum()),
+    embedding = flat_embedding.reshape(len(activity), len(sampled_time), 3)
+    return embedding, sampled_time.astype(np.float32), pca_values, {
+        "constant_features": int(constant.sum()),
         "pca_explained_variance_ratio_sum": float(
             pca.explained_variance_ratio_.sum()
         ),
@@ -278,7 +283,9 @@ def run_experiment(
         raise RuntimeError("Nonfinite AxoSim manifold recording")
     dynamic_score = _classify_scene(dynamic, time, contract)
     uniform_score = _classify_scene(uniform, time, contract)
-    embedding, pca_values, embedding_metrics = _embed_neurons(dynamic, time, contract)
+    state_embedding, state_time, pca_values, embedding_metrics = _embed_states(
+        dynamic, time, contract
+    )
     low = np.quantile(dynamic, 0.05, axis=(0, 1)).reshape(-1).astype(np.float32)
     high = np.quantile(dynamic, 0.95, axis=(0, 1)).reshape(-1).astype(np.float32)
     advantage = dynamic_score["balanced_accuracy"] - uniform_score["balanced_accuracy"]
@@ -294,7 +301,8 @@ def run_experiment(
         dynamic=dynamic,
         uniform=uniform,
         time=time,
-        embedding=embedding,
+        state_embedding=state_embedding,
+        state_time=state_time,
         pca=pca_values,
         activity_low=low,
         activity_high=high,
@@ -332,7 +340,7 @@ def run_experiment(
         "embedding": {
             **contract["embedding"],
             **embedding_metrics,
-            "object": "one fixed point per neuron based on its response fingerprint across all natural scenes",
+            "object": "one point per sampled 2,884-neuron population state; three fixed trajectories correspond to the three source clips",
         },
         "runtime_wall_seconds": time_module.monotonic() - started,
     }
@@ -342,42 +350,169 @@ def run_experiment(
 
 
 def _right_gradient():
-    overlay = Image.new("RGBA", (WIDTH, HEIGHT), (255, 255, 255, 0))
+    """Fade real footage into a dark neural-space canvas without a panel edge."""
+    overlay = Image.new("RGBA", (WIDTH, HEIGHT), (7, 8, 13, 0))
     draw = ImageDraw.Draw(overlay)
-    for x in range(500, WIDTH):
-        fraction = (x - 500) / (WIDTH - 500)
-        alpha = int(225 * (1 - (1 - fraction) ** 2))
-        draw.line((x, 0, x, HEIGHT), fill=(255, 255, 255, alpha))
+    for x in range(540, WIDTH):
+        fraction = (x - 540) / (WIDTH - 540)
+        alpha = int(246 * (fraction**0.72))
+        draw.line((x, 0, x, HEIGHT), fill=(7, 8, 13, alpha))
     return overlay
 
 
 def _normalize_embedding(embedding):
     result = embedding.astype(np.float64).copy()
+    flat = result.reshape(-1, result.shape[-1])
     for axis in range(3):
-        lo, hi = np.quantile(result[:, axis], (0.01, 0.99))
-        result[:, axis] = np.clip((result[:, axis] - (lo + hi) / 2) / max((hi - lo) / 2, 1e-9), -1.2, 1.2)
+        lo, hi = np.quantile(flat[:, axis], (0.01, 0.99))
+        result[..., axis] = np.clip(
+            (result[..., axis] - (lo + hi) / 2) / max((hi - lo) / 2, 1e-9),
+            -1.2,
+            1.2,
+        )
     return result
 
 
-def _project(points, angle):
+def _project(points):
+    """Project a fixed camera; motion in the film must come only from activity."""
+    angle = 0.58
     cy, sy = math.cos(angle), math.sin(angle)
-    cx, sx = math.cos(-0.28), math.sin(-0.28)
+    cx, sx = math.cos(-0.36), math.sin(-0.36)
     rotate_y = np.asarray([[cy, 0, sy], [0, 1, 0], [-sy, 0, cy]])
     rotate_x = np.asarray([[1, 0, 0], [0, cx, -sx], [0, sx, cx]])
     rotated = points @ rotate_y.T @ rotate_x.T
-    perspective = 1 / np.clip(3.2 - rotated[:, 2], 1.2, None)
-    x = 956 + rotated[:, 0] * 535 * perspective
-    y = 430 - rotated[:, 1] * 535 * perspective
+    perspective = 1 / np.clip(3.45 - rotated[:, 2], 1.35, None)
+    x = 1002 + rotated[:, 0] * 520 * perspective
+    y = 384 - rotated[:, 1] * 520 * perspective
     return np.column_stack((x, y)), rotated[:, 2], perspective
 
 
-def _trailing_mean(values, samples=10):
-    cumulative = np.concatenate(
-        (np.zeros_like(values[:1]), np.cumsum(values, axis=0)), axis=0
+def _causal_envelope(values, *, dt, attack_seconds=0.16, decay_seconds=0.55):
+    """Smooth activity causally with a quick attack and persistent decay."""
+    output = np.empty_like(values, dtype=np.float32)
+    output[0] = values[0]
+    attack = 1 - math.exp(-dt / attack_seconds)
+    decay = 1 - math.exp(-dt / decay_seconds)
+    for index in range(1, len(values)):
+        rate = np.where(values[index] >= output[index - 1], attack, decay)
+        output[index] = output[index - 1] + rate * (
+            values[index] - output[index - 1]
+        )
+    return output
+
+
+def _causal_smooth_path(points, *, dt, time_constant_seconds=0.18):
+    """Low-pass a displayed trajectory without consulting future states."""
+    output = np.empty_like(points, dtype=np.float32)
+    output[0] = points[0]
+    rate = 1 - math.exp(-dt / time_constant_seconds)
+    for index in range(1, len(points)):
+        output[index] = output[index - 1] + rate * (
+            points[index] - output[index - 1]
+        )
+    return output
+
+
+def _activity_emphasis(values):
+    """Convert smooth activity into a continuous, legible within-frame field."""
+    low = np.quantile(values, 0.52, axis=1, keepdims=True)
+    high = np.quantile(values, 0.985, axis=1, keepdims=True)
+    return np.clip((values - low) / np.maximum(high - low, 1e-6), 0, 1)
+
+
+def _ramp(level):
+    """Goodfire-inspired violet → magenta → gold activation ramp."""
+    anchors = np.asarray(
+        [(63, 33, 182), (113, 67, 214), (222, 51, 154), (255, 196, 87)],
+        dtype=np.float64,
     )
-    indices = np.arange(len(values))
-    starts = np.maximum(indices + 1 - samples, 0)
-    return (cumulative[indices + 1] - cumulative[starts]) / (indices + 1 - starts)[:, None]
+    position = float(np.clip(level, 0, 1)) * (len(anchors) - 1)
+    index = min(int(position), len(anchors) - 2)
+    fraction = position - index
+    return np.rint(
+        anchors[index] * (1 - fraction) + anchors[index + 1] * fraction
+    ).astype(int)
+
+
+def _retinal_coordinates_from_recording(u, v):
+    x = u.astype(np.float64) + v.astype(np.float64) / 2
+    y = v.astype(np.float64) * math.sqrt(3) / 2
+    x /= np.max(np.abs(x))
+    y /= np.max(np.abs(y))
+    return (0.5 + 0.47 * x) * WIDTH, (0.5 + 0.47 * y) * HEIGHT
+
+
+def _draw_retinal_field(image, levels, retinal_x, retinal_y):
+    """Render measured retinotopic response as a continuous activation field."""
+    scale = 4
+    field_height, field_width = HEIGHT // scale, WIDTH // scale
+    field = np.zeros((field_height, field_width), dtype=np.float32)
+    x = np.clip(np.rint(retinal_x / scale).astype(int), 0, field_width - 1)
+    y = np.clip(np.rint(retinal_y / scale).astype(int), 0, field_height - 1)
+    response = np.clip((levels - 0.18) / 0.82, 0, 1) ** 1.7
+    np.add.at(field, (y, x), response)
+    field = gaussian_filter(field, sigma=5.5)
+    maximum = float(field.max())
+    if maximum <= 1e-9:
+        return
+    field = np.clip(field / maximum, 0, 1)
+    field = np.clip((field - 0.08) / 0.92, 0, 1)
+
+    # Keep the retinal readout on the footage side of the composition.
+    fade = np.clip(
+        (720 / scale - np.arange(field_width)) / (180 / scale), 0, 1
+    )
+    field *= fade[None, :]
+    palette = np.asarray(
+        [_ramp(value / 255) for value in range(256)], dtype=np.uint8
+    )
+    rgba = np.empty((field_height, field_width, 4), dtype=np.uint8)
+    rgba[..., :3] = palette[np.rint(field * 255).astype(np.uint8)]
+    rgba[..., 3] = np.rint(112 * field**1.25).astype(np.uint8)
+    overlay = Image.fromarray(rgba, "RGBA").resize(
+        (WIDTH, HEIGHT), Image.Resampling.BILINEAR
+    )
+    image.alpha_composite(overlay)
+
+
+def _draw_manifold(image, projected_paths, depth_paths, active_scene, trail):
+    """Draw the fixed state manifold and a bright causal path through it."""
+    draw = ImageDraw.Draw(image, "RGBA")
+    for scene_index, path in enumerate(projected_paths):
+        valid = [tuple(point) for point in path if 650 <= point[0] < 1274 and 36 <= point[1] < 650]
+        if len(valid) > 1:
+            alpha = 82 if scene_index == active_scene else 38
+            draw.line(valid, fill=(121, 104, 181, alpha), width=2)
+        order = np.argsort(depth_paths[scene_index])
+        for point_index in order[::2]:
+            x, y = path[point_index]
+            if 650 <= x < 1274 and 36 <= y < 650:
+                alpha = 116 if scene_index == active_scene else 58
+                draw.ellipse((x - 1.7, y - 1.7, x + 1.7, y + 1.7), fill=(177, 171, 205, alpha))
+
+    if len(trail) > 1:
+        halo = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+        halo_draw = ImageDraw.Draw(halo, "RGBA")
+        halo_draw.line([tuple(point) for point in trail], fill=(225, 49, 161, 110), width=15)
+        halo = halo.filter(ImageFilter.GaussianBlur(10))
+        image.alpha_composite(halo)
+        draw = ImageDraw.Draw(image, "RGBA")
+        for index in range(1, len(trail)):
+            age = index / (len(trail) - 1)
+            color = _ramp(age)
+            draw.line(
+                (tuple(trail[index - 1]), tuple(trail[index])),
+                fill=(*color.tolist(), int(40 + 205 * age)),
+                width=max(3, int(3 + 5 * age)),
+            )
+        x, y = trail[-1]
+        halo = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+        halo_draw = ImageDraw.Draw(halo, "RGBA")
+        halo_draw.ellipse((x - 28, y - 28, x + 28, y + 28), fill=(255, 103, 173, 190))
+        halo = halo.filter(ImageFilter.GaussianBlur(15))
+        image.alpha_composite(halo)
+        draw = ImageDraw.Draw(image, "RGBA")
+        draw.ellipse((x - 7, y - 7, x + 7, y + 7), fill=(255, 239, 199, 255))
 
 
 def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
@@ -387,90 +522,110 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
         raise ValueError("Manifold experiment is incomplete")
     with np.load(recording) as data:
         dynamic = data["dynamic"].astype(np.float32)
-        embedding = _normalize_embedding(data["embedding"])
+        state_embedding = data["state_embedding"].astype(np.float32)
+        state_time = data["state_time"].astype(np.float32)
         low = data["activity_low"].astype(np.float32)
         high = data["activity_high"].astype(np.float32)
-        layer_index = data["layer_index"].astype(np.int64)
+        u = data["u"].astype(np.int64)
+        v = data["v"].astype(np.int64)
     flat_activity = dynamic.reshape(len(dynamic), len(dynamic[0]), -1)
-    smoothed = np.asarray([_trailing_mean(scene) for scene in flat_activity])
-    total_seconds = len(contract["scenes"]) * float(contract["duration_seconds"])
+    normalized = np.clip(
+        (flat_activity - low) / np.maximum(high - low, 1e-6), 0, 1
+    )
+    smoothed = np.asarray(
+        [
+            _causal_envelope(
+                scene,
+                dt=float(contract["source_dt_seconds"]),
+            )
+            for scene in normalized
+        ]
+    )
+    emphasized = np.asarray([_activity_emphasis(scene) for scene in smoothed])
+    state_embedding = np.asarray(
+        [
+            _causal_smooth_path(
+                scene,
+                dt=float(contract["embedding"]["sample_seconds"]),
+            )
+            for scene in state_embedding
+        ]
+    )
+    state_embedding = _normalize_embedding(state_embedding)
+    projected_paths = []
+    depth_paths = []
+    for scene_embedding in state_embedding:
+        projected, depth, _ = _project(scene_embedding)
+        projected_paths.append(projected)
+        depth_paths.append(depth)
+    projected_paths = np.asarray(projected_paths)
+    depth_paths = np.asarray(depth_paths)
+    retinal_x, retinal_y = _retinal_coordinates_from_recording(u, v)
+    display_start = max(float(contract["warmup_seconds"]), 1.0)
+    scene_seconds = float(contract["duration_seconds"]) - display_start
+    total_seconds = len(contract["scenes"]) * scene_seconds
     total_frames = int(round(total_seconds * fps))
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     readers = [imageio.get_reader(scene["path"]) for scene in contract["scenes"]]
     gradient = _right_gradient()
     title_font = _font(25, weight=600)
-    heading_font = _font(14, weight=600)
-    metric_font = _font(18, weight=600)
-    small_font = _font(13)
     writer = imageio.get_writer(
-        output / "real-scenes-neuron-manifold.mp4",
+        output / "axosim-neural-landscape.mp4",
         fps=fps,
         codec="libx264",
-        quality=9,
+        quality=None,
         macro_block_size=1,
+        ffmpeg_params=[
+            "-preset",
+            "slow",
+            "-crf",
+            "20",
+            "-movflags",
+            "+faststart",
+        ],
     )
     try:
         for frame in range(total_frames):
             global_time = frame / fps
             scene_index = min(
-                int(global_time // contract["duration_seconds"]),
+                int(global_time // scene_seconds),
                 len(contract["scenes"]) - 1,
             )
-            local_time = global_time - scene_index * contract["duration_seconds"]
+            local_time = display_start + global_time - scene_index * scene_seconds
             scene = contract["scenes"][scene_index]
             media = report["scenes"][scene_index]
             source_frame = int((scene["start_seconds"] + local_time) * media["fps"])
             background = Image.fromarray(readers[scene_index].get_data(source_frame)).convert("RGBA")
             background = background.resize((WIDTH, HEIGHT), Image.Resampling.LANCZOS)
-            background.alpha_composite(gradient)
-            draw = ImageDraw.Draw(background, "RGBA")
             activity_index = min(
                 int(round(local_time / contract["source_dt_seconds"])),
                 smoothed.shape[1] - 1,
             )
-            activity = smoothed[scene_index, activity_index]
-            normalized = np.clip((activity - low) / np.maximum(high - low, 1e-6), 0, 1)
-            angle = 0.18 + global_time / total_seconds * 1.05
-            projected, depth, perspective = _project(embedding, angle)
-            order = np.argsort(depth)
-            for neuron in order:
-                x, y = projected[neuron]
-                if not (540 <= x < 1272 and 25 <= y < 660):
-                    continue
-                level = float(normalized[neuron])
-                base = LAYER_COLORS[layer_index[neuron]]
-                color = np.rint(225 + (base - 225) * (0.2 + 0.8 * level)).astype(int)
-                radius = max(1.0, (1.2 + 3.0 * level) * perspective[neuron] * 2.5)
-                draw.ellipse(
-                    (x-radius, y-radius, x+radius, y+radius),
-                    fill=(*color.tolist(), int(55 + 195 * level)),
-                )
-            # Layer labels follow their projected centroids.
-            for layer, name in enumerate(contract["record_layers"]):
-                center = projected[layer_index == layer].mean(axis=0)
-                draw.text(
-                    (float(center[0]) + 8, float(center[1]) - 8),
-                    name,
-                    font=small_font,
-                    fill=(*LAYER_COLORS[layer].astype(int).tolist(), 230),
-                )
-            draw.text((42, 42), f"REAL-WORLD STIMULUS · {scene['name'].upper()}", font=heading_font, fill=(255, 255, 255, 245), stroke_width=2, stroke_fill=(20, 22, 26, 115))
-            draw.text((795, 42), "2,884 ACTUAL AXOSIM NEURONS", font=heading_font, fill=MUTED)
-            verdict = "held-out frames separate" if report["passed"] else "negative result"
-            draw.text((795, 67), verdict, font=metric_font, fill=(63, 33, 182) if report["passed"] else INK)
-            natural = report["natural_scene_classification"]["balanced_accuracy"]
-            uniform = report["uniform_luminance_classification"]["balanced_accuracy"]
-            draw.text((795, 101), f"held-out clip decoding  {natural:.0%}", font=small_font, fill=INK)
-            control_label = (
-                "constant-gray control"
-                if isinstance(report["retinal_normalization"], dict)
-                else "uniform-luminance control"
+            levels = emphasized[scene_index, activity_index]
+            t4_t5 = levels.reshape(4, 721)[2:].max(axis=0)
+            _draw_retinal_field(background, t4_t5, retinal_x, retinal_y)
+            background.alpha_composite(gradient)
+            state_index = int(np.searchsorted(state_time, local_time, side="right") - 1)
+            state_index = min(max(state_index, 0), len(state_time) - 1)
+            trail_start = max(0, state_index - int(round(1.6 / contract["embedding"]["sample_seconds"])))
+            trail = projected_paths[scene_index, trail_start : state_index + 1]
+            _draw_manifold(
+                background,
+                projected_paths,
+                depth_paths,
+                scene_index,
+                trail,
             )
-            draw.text((795, 126), f"{control_label}  {uniform:.0%}", font=small_font, fill=MUTED)
-            draw.text((795, 151), f"UMAP trustworthiness  {report['embedding']['trustworthiness']:.3f}", font=small_font, fill=MUTED)
-            draw.rounded_rectangle((22, 655, 337, 709), radius=13, fill=(255, 255, 255, 235))
-            draw.text((42, 672), "AxoSim - Axym Labs", font=title_font, fill=INK)
+            draw = ImageDraw.Draw(background, "RGBA")
+            draw.text(
+                (39, 671),
+                "AxoSim - Axym Labs",
+                font=title_font,
+                fill=(255, 255, 255, 255),
+                stroke_width=1,
+                stroke_fill=(0, 0, 0, 150),
+            )
             writer.append_data(np.asarray(background.convert("RGB")))
             if frame in (0, total_frames // 3, 2 * total_frames // 3, total_frames - 1):
                 background.convert("RGB").save(output / f"frame-{frame:03d}.png")
@@ -480,7 +635,7 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
             reader.close()
     metadata = {
         "title": "AxoSim - Axym Labs",
-        "video": "real-scenes-neuron-manifold.mp4",
+        "video": "axosim-neural-landscape.mp4",
         "frames": total_frames,
         "fps": fps,
         "seconds": total_seconds,
@@ -496,8 +651,14 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
             "uniform": report["uniform_luminance_classification"],
         },
         "embedding": report["embedding"],
-        "display": "fixed 3D UMAP neuron coordinates; depth-sorted perspective; causal 50-ms activation mean; fixed per-neuron 5th/95th percentile scale",
+        "display": "fixed-camera temporal 3D UMAP; every point is one 2,884-neuron population state; persistent full trajectories; causal 180-ms display smoothing and causal 1.6-second current-state trail; strongest T4c/T5c responses at their retinal coordinates",
+        "activity_color": "violet-magenta-gold marks trail recency and T4c/T5c response strength; it never denotes cell type",
+        "display_start_seconds_per_scene": display_start,
+        "camera_motion": False,
+        "activity_blinking": False,
+        "text_in_frame": ["AxoSim - Axym Labs"],
         "renderer": "Pillow custom perspective renderer with Inter; no Matplotlib",
+        "encoding": "H.264 High, CRF 20, yuv420p, fast-start",
         "controller_or_motor_output": False,
         "future_activity_shown": False,
     }
