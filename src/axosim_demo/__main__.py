@@ -13,6 +13,13 @@ COMMANDS={
     'shiu-benchmark':'axosim_demo.shiu_benchmark',
     'whole-brain':'axosim_demo.whole_brain',
     'vision-reference':'axosim_demo.vision_reference',
+    'vision-axosim':'axosim_demo.vision_axosim',
+    'vision-video':'axosim_demo.vision_video',
+    'natural-vision':'axosim_demo.natural_vision',
+    'natural-manifold':'axosim_demo.natural_manifold',
+    'whole-brain-video':'axosim_demo.whole_brain_video',
+    'mb-conditioning':'axosim_demo.mb_conditioning',
+    'mb-conditioning-video':'axosim_demo.mb_conditioning_video',
     'scene-preview':'axosim_demo.scene_preview',
 }
 
@@ -32,4 +39,5 @@ def main():
     module.main()
 
 
-if __name__=='__main__':main()
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,32 @@
+{
+  "scope": "Frozen AxoSim substitution in the pinned FlyVis moving-edge circuit",
+  "flyvis_commit": "92b3845cc426dd309a1a0e1b3890156c42e14021",
+  "flyvis_network": "flow/0000/000",
+  "pretrained_archive_sha256": "71c78d4070556a536b13b23ee3139cd2788aa2a9d07d430a223b4edead281db1",
+  "axosim_checkpoint_sha256": "19a045bf5b62ca92ab547934ca031e31f464ff2421f0d07b60d8278189889626",
+  "protocol": {
+    "offsets": [-10, 11],
+    "intensities": [0, 1],
+    "speeds": [19],
+    "height": 80,
+    "post_pad_mode": "continue",
+    "t_pre": 1.0,
+    "t_post": 1.0,
+    "source_dt_seconds": 0.005,
+    "axosim_dt_seconds": 0.004,
+    "angles_deg": [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330],
+    "training_angles_deg": [0, 60, 120, 180, 240, 300],
+    "held_out_angles_deg": [30, 90, 150, 210, 270, 330]
+  },
+  "calibration": {
+    "morphology_indices": [0, 1, 2, 3, 4],
+    "edge_current_gains": [0.125, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0],
+    "selection_metric": "mean Pearson correlation to FlyVis peak tuning over T4a-d light edges and T5a-d dark edges on training angles"
+  },
+  "control_seed": 20260930,
+  "video_gate": {
+    "minimum_mean_held_out_t4_t5_correlation": 0.0,
+    "maximum_t4c_preferred_direction_error_deg": 30.0,
+    "requires_spatial_control_reduction": true
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "scope": "Frozen 3D neuron manifold under spatially controlled licensed real-world scenes",
+  "vision_config": "configs/flyvis_moving_edge.json",
+  "scored_summary": "data/vision_axosim/summary.json",
+  "source_dt_seconds": 0.005,
+  "duration_seconds": 4.0,
+  "warmup_seconds": 0.5,
+  "record_layers": ["L1", "Mi1", "T4c", "T5c"],
+  "retinal_normalization": {
+    "mean": 0.5,
+    "standard_deviation": 0.15,
+    "clip": [0.0, 1.0],
+    "control": "constant mean-gray field"
+  },
+  "scenes": [
+    {
+      "name": "woodland",
+      "path": "data/natural_manifold/sources/woodland.mp4",
+      "page": "https://www.pexels.com/video/walking-into-the-woods-8381986/",
+      "creator": "I Am Sorin",
+      "start_seconds": 20.0,
+      "sha256": "ded3617a45b61a956bba53a490fbbc9f3f8583a2ac06f60e59002286d81e2bda"
+    },
+    {
+      "name": "ocean",
+      "path": "data/natural_manifold/sources/ocean.mp4",
+      "page": "https://www.pexels.com/video/ocean-waves-19093263/",
+      "creator": "Atlantic Ambience",
+      "start_seconds": 2.0,
+      "sha256": "6d9b2ca081223361c8b2d88541d3182f33ec2538ae6286b975487ce6daeff3e0"
+    },
+    {
+      "name": "city",
+      "path": "data/natural_manifold/sources/city.mp4",
+      "page": "https://www.pexels.com/video/people-walking-on-a-street-in-a-city-19329330/",
+      "creator": "Ali Alcántara",
+      "start_seconds": 0.0,
+      "sha256": "8921ca702d67972924389c61f4d9ca6b4b40a0ee6227dc569dcb245e71dc387a"
+    }
+  ],
+  "classification": {
+    "sample_seconds": 0.025,
+    "train_seconds": [0.5, 2.0],
+    "test_seconds": [2.5, 4.0],
+    "logistic_C": 1.0,
+    "minimum_natural_balanced_accuracy": 0.75,
+    "minimum_advantage_over_uniform": 0.10
+  },
+  "embedding": {
+    "sample_seconds": 0.025,
+    "pca_components": 50,
+    "n_neighbors": 45,
+    "min_dist": 0.2,
+    "metric": "cosine",
+    "random_seed": 20260930,
+    "trustworthiness_neighbors": 15
+  }
+}
