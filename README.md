@@ -6,6 +6,8 @@ The earlier walking videos used an engineered odor-to-steering rule and a hybrid
 
 An acceptable embodied demonstration must use AxoSim for the neural dynamics and connect measured sensory physiology, the appropriate neural graph, motor-neuron outputs, and a defensible neuromuscular/body model. An engineered steering rule, gait oscillator, behavior selector, trajectory follower, RL motor layer or replay cannot supply the behavior being claimed.
 
+There is a concrete direct-coupling route to test. [Pugliese et al.'s released VNC simulation](https://github.com/smpuglie/Pugliese_2026) produces rhythms in anatomically identified leg motor neurons from its recurrent fly circuit. The [FANC atlas](https://pmc.ncbi.nlm.nih.gov/articles/PMC11348827/) identifies front-leg muscle targets, [Azevedo et al.](https://pmc.ncbi.nlm.nih.gov/articles/PMC7347388/) measured adult motor-unit spikes and force, and the fork already contains [FlyMimic's](https://github.com/gizemozd/FlyMimic) anatomical foreleg muscle plant. Joining and validating those links is active work. The mammalian-trained checkpoint is an out-of-domain starting hypothesis, not a reason to stop implementation.
+
 ## What currently has evidence
 
 - **Numerical AxoSim integration and sparse equivalence.** Persistent trained-Lite execution, morphology adaptation, contact efficacies and causal forecast alignment are checked against reference interfaces. The sparse change preserves contact operations without pruning; it does not alter the separate fused path underlying technical-report Figure 5.
