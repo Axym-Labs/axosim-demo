@@ -47,6 +47,15 @@ def test_torch_routing_matches_hand_computed_signed_sum(tmp_path):
     torch.testing.assert_close(out, torch.tensor([4.,4.,-4.]))
 
 
+def test_torch_block_routing_matches_independent_reference_steps(tmp_path):
+    import torch
+    graph = ExactConnectome.from_shiu(*graph_files(tmp_path))
+    router = graph.torch_router('cpu')
+    activity = torch.tensor([[1., 0., 2.], [2., 3., 0.], [4., 1., 1.]])
+    expected = torch.stack([router(activity[:, t]) for t in range(3)], dim=1)
+    torch.testing.assert_close(router.route_block(activity), expected)
+
+
 def test_flat_memory_is_based_on_actual_edges_not_max_degree(tmp_path):
     graph = ExactConnectome.from_shiu(*graph_files(tmp_path))
     report = graph.memory_report()

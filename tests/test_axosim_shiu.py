@@ -41,3 +41,21 @@ def test_upstream_stimulation_sets_and_readout_ids_match_pinned_config():
     wanted = {c['notebook_variable']: c['root_ids'] for c in contract['conditions'].values() if c['notebook_variable']}
     wanted.update({r['notebook_variable']: r['root_id'] for r in contract['readouts'].values()})
     assert notebook_assignments(path, wanted) == wanted
+
+
+def test_feeding_populations_readout_and_coactivation_match_pinned_notebook():
+    from axosim_demo.shiu_benchmark import notebook_assignments
+    path = ROOT / 'data/reference/shiu_figures.ipynb'
+    if not path.exists():
+        pytest.skip('Download original reference notebook to run integration identity check')
+    contract = json.loads((ROOT / 'configs/shiu_feeding.json').read_text())
+    wanted = {
+        c['notebook_variable']: c['root_ids']
+        for c in contract['conditions'].values() if c['notebook_variable']
+    }
+    wanted['id_mn9'] = contract['readouts']['MN9_L']['root_id']
+    assert notebook_assignments(path, wanted) == wanted
+    assert contract['conditions']['sugar_bitter']['root_ids'] == (
+        contract['conditions']['sugar']['root_ids']
+        + contract['conditions']['bitter']['root_ids']
+    )

@@ -44,6 +44,9 @@ axosim-demo = [
     "brian2==2.10.1",
     "joblib==1.5.3",
 ]
+vision-reference = [
+    "flyvis @ git+https://github.com/TuragaLab/flyvis.git@92b3845cc426dd309a1a0e1b3890156c42e14021",
+]
 warp = [
     "warp-lang>=1.14,<1.15",
     "mujoco_warp>=3.9,<3.10",

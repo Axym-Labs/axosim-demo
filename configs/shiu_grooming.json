@@ -191,6 +191,14 @@
     }
   },
   "expected_direction": "aBN1 responds more strongly to JO-C/E than JO-F; no absolute biological rate threshold inferred",
+  "comparisons": [
+    {
+      "name": "aBN1_jo_ce_greater_than_jo_f",
+      "readout": "aBN1",
+      "positive": "jo_ce",
+      "negative": "jo_f"
+    }
+  ],
   "parameters": {
     "rest_mv": -52,
     "reset_mv": -52,

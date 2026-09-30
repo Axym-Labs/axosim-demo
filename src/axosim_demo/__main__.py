@@ -11,6 +11,8 @@ COMMANDS={
     'neuron-fidelity':'axosim_demo.neuron_fidelity',
     'connectome-audit':'axosim_demo.audit',
     'shiu-benchmark':'axosim_demo.shiu_benchmark',
+    'whole-brain':'axosim_demo.whole_brain',
+    'vision-reference':'axosim_demo.vision_reference',
     'scene-preview':'axosim_demo.scene_preview',
 }
 

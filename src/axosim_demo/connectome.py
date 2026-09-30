@@ -132,3 +132,15 @@ class TorchExactRouter:
         messages = torch.index_select(activity, 0, self.source) * self.weight * self.efficacy
         out = torch.zeros(self.n_neurons, device=activity.device, dtype=activity.dtype)
         return out.index_add_(0, self.target, messages)
+
+    def route_block(self, activity):
+        """Route a short time block while retaining every stored edge row."""
+        import torch
+        if activity.ndim != 2 or activity.shape[0] != self.n_neurons:
+            raise ValueError('Expected activity with shape (neurons, time)')
+        messages = torch.index_select(activity, 0, self.source) * self.weight.unsqueeze(1) * self.efficacy.unsqueeze(1)
+        out = torch.zeros(
+            self.n_neurons, activity.shape[1],
+            device=activity.device, dtype=activity.dtype,
+        )
+        return out.index_add_(0, self.target, messages)

@@ -14,6 +14,7 @@ There is a concrete direct-coupling route to test. [Pugliese et al.'s released V
 - **Retrospective neuronal comparison.** On four existing mammalian NEURON validation traces, frozen Lite obtained 2.985 mV clipped-voltage RMSE versus 3.299/3.767 mV for train-fitted LIF baselines, and spike F1 within 5 ms of 0.476 versus 0/0.342. This is a small retrospective panel; prior checkpoint exposure is unverified. It establishes neither fly physiology nor architecture-only superiority.
 - **Original Shiu neural benchmark.** Unmodified Brian2 code simulates all 127,400 released neurons and 14,687,178 weighted edges. Three seeds reproduce stronger aBN1 activation from JO-C/E than JO-F stimulation. This is the original LIF model, not an AxoSim fly model.
 - **Exact connectome routing audit.** Released edges are retained, integer identities checked, and GPU routing compared against a CPU reference. This does not measure a complete adaptive brain/body run.
+- **Experimental whole-brain AxoSim runtime.** The pretrained checkpoint now advances one causal AxoSim state for each of 127,400 v630 neurons while a flat GPU router retains all 14,687,178 pair edges and 52,793,639 anatomical contacts. It uses no fitted network gain and exposes the missing dendritic-contact map as a uniform route-marginalization hypothesis. This first hypothesis does not reproduce the published grooming or feeding specificity robustly across checkpoint morphologies, so its traces are retained as negative scientific results and are not rendered as a success demo.
 - **Visual infrastructure.** Imported woodland geometry, static anatomical previews, full-frame composition, the Axym website's Inter font, actual TikZ/PGFPlots overlays, and camera framing that reserves space for the overlay. Static scene previews demonstrate assets, not behavior.
 
 ## Install and run the supported checks
@@ -38,6 +39,9 @@ The dependency lock pins the original sparse-event fix. The required trained che
   --seeds 0 1 2 --output /path/to/shiu-results
 .venv/bin/python -m axosim_demo connectome-audit \
   --download --device cuda --output /path/to/memory-audit.json
+.venv/bin/python -m axosim_demo whole-brain \
+  --config configs/shiu_grooming.json --seeds 0 1 2 \
+  --device cuda --output /path/to/axosim-whole-brain
 ```
 
 Checkpoint SHA-256: `19a045bf5b62ca92ab547934ca031e31f464ff2421f0d07b60d8278189889626`. It is a **mammalian-trained** Lite model; no validated fly checkpoint was found. The current 1-ms/P4 neural contract also cannot silently stand in for the original Shiu model's 0.1-ms integration and fractional-ms delay/refractory values.
@@ -49,6 +53,15 @@ MUJOCO_GL=egl .venv/bin/python -m axosim_demo scene-preview --output /path/to/st
 ```
 
 The bundled CC0 scene has seven imported pine trees, ferns, bark, a stump and mossy rock. Its visual props have no contact forces, the physical ground remains flat, and native MuJoCo rendering is not photorealistic. The clean stills have no simulated activity or plot overlay. Source hashes, licenses, conversions and visual geometry reductions are recorded in `assets/forest_scene/`.
+
+The moving-edge visual benchmark has a separate pinned reference extra. It reproduces the official FlyVis metrics and is explicitly a non-AxoSim comparison arm:
+
+```bash
+uv pip install --python .venv/bin/python -e '.[vision-reference]'
+flyvis download-pretrained
+.venv/bin/python -m axosim_demo vision-reference \
+  --root /path/to/flyvis-data --output /path/to/vision-reference
+```
 
 TikZ overlays require `tectonic` and Poppler's `pdftocairo`. `axosim_demo.tikz_plot` compiles axes and traces separately, preserving vector exports and revealing recorded samples progressively. The compositor keeps full-frame footage, uses a translucent frosted backdrop, and shows only `AxoSim - Axym Labs` as the title. Inter's OFL and source pin are included with its font asset. Plot labels identify native outputs; they do not invent calibrated fly firing rates.
 

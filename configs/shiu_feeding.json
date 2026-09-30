@@ -1,0 +1,128 @@
+{
+  "upstream_repository": "https://github.com/philshiu/Drosophila_brain_model",
+  "upstream_commit": "91bdd1e7dcf193f3e7ca5a8933497fcef63b7960",
+  "license": "MIT; Philip Shiu and contributors",
+  "files": {
+    "model": {
+      "path": "data/reference/shiu_model.py",
+      "sha256": "fc45837d7122c6ce2a7f3f2f23c515992e4b232aadb919efabb72337fac88e4e",
+      "url": "https://raw.githubusercontent.com/philshiu/Drosophila_brain_model/91bdd1e7dcf193f3e7ca5a8933497fcef63b7960/model.py"
+    },
+    "notebook": {
+      "path": "data/reference/shiu_figures.ipynb",
+      "sha256": "33cd73c0b4b4a291c51b7bab639c4fa28978e49e111ff0d6adbca5687addb84c",
+      "url": "https://raw.githubusercontent.com/philshiu/Drosophila_brain_model/91bdd1e7dcf193f3e7ca5a8933497fcef63b7960/figures.ipynb"
+    },
+    "neurons": {
+      "path": "data/connectome/neurons_630.csv",
+      "sha256": "e6b71e17671a9bdb05f55e4bc6774640a1418cb7a05125e0fc994ad40f9bfdfb",
+      "url": "https://raw.githubusercontent.com/philshiu/Drosophila_brain_model/91bdd1e7dcf193f3e7ca5a8933497fcef63b7960/2023_03_23_completeness_630_final.csv"
+    },
+    "edges": {
+      "path": "data/connectome/connectivity_630.parquet",
+      "sha256": "94db8c650533bc36ffa3223f2e62325d5648b8d6bd31c3a4e1c804628c7557b3",
+      "url": "https://raw.githubusercontent.com/philshiu/Drosophila_brain_model/91bdd1e7dcf193f3e7ca5a8933497fcef63b7960/2023_03_23_connectivity_630_final.parquet"
+    }
+  },
+  "scope": "Shiu v630 right-labellar feeding protocol with exact published sensory and MN9 root IDs",
+  "dt_ms": 1,
+  "duration_ms": 1000,
+  "rate_hz": 150,
+  "conditions": {
+    "sugar": {
+      "notebook_variable": "neu_sugar",
+      "root_ids": [
+        720575940624963786, 720575940630233916, 720575940637568838,
+        720575940638202345, 720575940617000768, 720575940630797113,
+        720575940632889389, 720575940621754367, 720575940621502051,
+        720575940640649691, 720575940639332736, 720575940616885538,
+        720575940639198653, 720575940620900446, 720575940617937543,
+        720575940632425919, 720575940633143833, 720575940612670570,
+        720575940628853239, 720575940629176663, 720575940611875570
+      ]
+    },
+    "bitter": {
+      "notebook_variable": "neu_bitter",
+      "root_ids": [
+        720575940621778381, 720575940602353632, 720575940617094208,
+        720575940619197093, 720575940626287336, 720575940618600651,
+        720575940627692048, 720575940630195909, 720575940646212996,
+        720575940610483162, 720575940645743412, 720575940627578156,
+        720575940622298631, 720575940621008895, 720575940629146711,
+        720575940610259370, 720575940610481370, 720575940619028208,
+        720575940614281266, 720575940613061118, 720575940604027168
+      ]
+    },
+    "water": {
+      "notebook_variable": "neu_water",
+      "root_ids": [
+        720575940612950568, 720575940631898285, 720575940606002609,
+        720575940612579053, 720575940622902535, 720575940616177458,
+        720575940660292225, 720575940622486922, 720575940613786774,
+        720575940629852866, 720575940625861168, 720575940613996959,
+        720575940617857694, 720575940644965399, 720575940625203504,
+        720575940630553415, 720575940635172191, 720575940634796536
+      ]
+    },
+    "sugar_bitter": {
+      "notebook_variable": null,
+      "root_ids": [
+        720575940624963786, 720575940630233916, 720575940637568838,
+        720575940638202345, 720575940617000768, 720575940630797113,
+        720575940632889389, 720575940621754367, 720575940621502051,
+        720575940640649691, 720575940639332736, 720575940616885538,
+        720575940639198653, 720575940620900446, 720575940617937543,
+        720575940632425919, 720575940633143833, 720575940612670570,
+        720575940628853239, 720575940629176663, 720575940611875570,
+        720575940621778381, 720575940602353632, 720575940617094208,
+        720575940619197093, 720575940626287336, 720575940618600651,
+        720575940627692048, 720575940630195909, 720575940646212996,
+        720575940610483162, 720575940645743412, 720575940627578156,
+        720575940622298631, 720575940621008895, 720575940629146711,
+        720575940610259370, 720575940610481370, 720575940619028208,
+        720575940614281266, 720575940613061118, 720575940604027168
+      ]
+    },
+    "baseline": {
+      "notebook_variable": null,
+      "root_ids": []
+    }
+  },
+  "readouts": {
+    "MN9_L": {
+      "notebook_variable": "id_mn9",
+      "root_id": 720575940660219265
+    },
+    "MN9_R": {
+      "notebook_variable": null,
+      "root_id": 720575940645521262
+    }
+  },
+  "comparisons": [
+    {
+      "name": "sugar_drives_MN9_L_over_baseline",
+      "readout": "MN9_L",
+      "positive": "sugar",
+      "negative": "baseline"
+    },
+    {
+      "name": "sugar_is_more_specific_than_bitter",
+      "readout": "MN9_L",
+      "positive": "sugar",
+      "negative": "bitter"
+    },
+    {
+      "name": "sugar_is_more_specific_than_water",
+      "readout": "MN9_L",
+      "positive": "sugar",
+      "negative": "water"
+    },
+    {
+      "name": "bitter_suppresses_sugar",
+      "readout": "MN9_L",
+      "positive": "sugar",
+      "negative": "sugar_bitter"
+    }
+  ],
+  "expected_direction": "Sugar drives MN9; bitter and water do not; bitter co-stimulation suppresses the sugar response. Absolute rates are not transferred to AxoSim."
+}
