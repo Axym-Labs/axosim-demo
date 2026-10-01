@@ -32,6 +32,8 @@ The two-minute neural-state film contains 24 five-second image intervals: twelve
 
 The film records 2,884 L1, Mi1, T4c and T5c cells, places the stimulus full frame, and shows a fixed-camera 3D UMAP of the population state. A short causal trail follows the current response. No activity field is drawn over the source imagery. The only in-frame text is the unoutlined white Inter title `AxoSim - Axym Labs`, right-aligned beneath the state space; the presentation has no camera rotation or activity blinking. One continuous 121-second AxoSim run supplies every displayed state, with overlapping context windows that prevent neural resets at visible boundaries. A held-out temporal-block classifier separates the 24 stimulus intervals at **1.000** balanced accuracy versus **0.0806** for the time-matched continuous mean-gray control (nominal chance **0.0417**). Across 23 cross-image transitions, the median transition-to-post-transition distance from the late recurrent orbit decreases by a factor of **2.17**. In the steady portion of all 24 intervals, peak-frequency drift between consecutive 1.5-second windows is **0 Hz**, and oscillation-amplitude ratios range from **0.909 to 1.302**. These measurements support a stable oscillatory trajectory; establishing a limit-cycle attractor requires perturbation-and-return validation.
 
+The perturbation-and-return experiment now provides that validation within the substituted model. It displaces all **478,812 free recurrent-state variables**—eight AxoSim hidden values and four propagated activity values for each of 39,901 unclamped recurrent cells—and measures phase-insensitive distance to the pre-perturbation orbit against a matched unperturbed continuation. Across six constant images, the **0.10σ** displacement returns in **29/30** trials and the **0.25σ** displacement returns in **27/30** trials. Both preregistered gates pass. This supports a local numerical limit-cycle attractor under the tested inputs; it does not establish the same attractor in fly physiology or under biologically delivered perturbations.
+
 The first full-spatial representation is preserved as a negative development result. Its final-image classifier scored 0.0417 balanced accuracy and its raw nearest-neighbor geometry did not track motion angle. This motivated the development-only comparison of anatomically pooled summaries before the fresh final images were recorded.
 
 ## Reproduce
@@ -74,6 +76,21 @@ PYTHONPATH=src .venv/bin/python -m axosim_demo natural-manifold render \
   --recording data/natural_manifold/result-2min/manifold-recording.npz \
   --summary data/natural_manifold/result-2min/summary.json \
   --output data/natural_manifold/rendered-2min
+```
+
+Run and render the full-state perturbation test:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m axosim_demo limit-cycle run \
+  --config configs/limit_cycle_return.json \
+  --root data/flyvis \
+  --output data/natural_manifold/limit-cycle \
+  --device cuda
+
+PYTHONPATH=src .venv/bin/python -m axosim_demo limit-cycle render \
+  --summary data/natural_manifold/limit-cycle/limit-cycle-summary.json \
+  --distances data/natural_manifold/limit-cycle/limit-cycle-distances.npz \
+  --output data/natural_manifold/limit-cycle/figures
 ```
 
 The experiment contract is [`configs/natural_geometry.json`](configs/natural_geometry.json). It pins the AxoSim checkpoint SHA-256 (`19a045bf5b62ca92ab547934ca031e31f464ff2421f0d07b60d8278189889626`), the expanded graph hash, sampling seed, split, stimulus, fitting procedure, and display settings. Image manifests preserve source IDs, hashes, URLs, licenses and attributions.

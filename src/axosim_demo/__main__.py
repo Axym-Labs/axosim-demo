@@ -17,6 +17,7 @@ COMMANDS = {
     "vision-axosim": "axosim_demo.vision_axosim",
     "natural-manifold": "axosim_demo.natural_manifold",
     "natural-geometry": "axosim_demo.natural_geometry",
+    "limit-cycle": "axosim_demo.limit_cycle",
 }
 
 

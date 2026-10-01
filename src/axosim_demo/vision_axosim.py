@@ -124,6 +124,49 @@ class AxoSimFlyVis:
             self.model.behavior_adaptation_bank[morphology_index][None].to(self.device)
         ).expand(self.n_nodes, -1)
 
+    def initial_recurrent_state(self):
+        """Return the complete recurrent state at a graph-update boundary."""
+        hidden = self.model.initial_state(
+            self.n_nodes, device=self.device, dtype=torch.float32
+        )
+        activity = torch.zeros((self.n_nodes, 4), device=self.device)
+        return hidden, activity
+
+    @torch.inference_mode()
+    def advance_block(self, stimulus_block, hidden, activity, *, current=None):
+        """Advance one four-millisecond block without resetting recurrence.
+
+        ``activity`` is updated at the externally clamped input indices before
+        graph propagation. Callers that branch a trajectory must clone both
+        ``hidden`` and ``activity`` first.
+        """
+        block = np.asarray(stimulus_block, dtype=np.float32)
+        if block.shape != (4, 721):
+            raise ValueError("Expected one stimulus block with shape (4, 721)")
+        if current is None:
+            current = torch.zeros_like(activity)
+        photoreceptors = np.tile(block, (1, 8))
+        activity.index_copy_(
+            0,
+            self.input_index,
+            torch.as_tensor(photoreceptors.T, device=self.device),
+        )
+        messages = (
+            activity.index_select(0, self.source)
+            * self.weight[:, None]
+            * self.edge_current_gain
+        )
+        current.zero_().index_add_(0, self.target, messages)
+        forecast, hidden = self.model.step_p4(
+            current.unsqueeze(-1) * self.route_feature,
+            hidden,
+            adaptation_cache=self.adaptation_cache,
+        )
+        activity = forecast[..., 1]
+        if not torch.isfinite(activity).all() or not torch.isfinite(hidden).all():
+            raise RuntimeError("Nonfinite AxoSim visual-circuit recurrent state")
+        return hidden, activity
+
     @torch.inference_mode()
     def run_stimulus(
         self,
@@ -136,10 +179,7 @@ class AxoSimFlyVis:
         if stimulus.ndim != 2 or stimulus.shape[1] != 721:
             raise ValueError("Expected FlyVis stimulus with shape (time, 721)")
         resampled, target_time = _resample(stimulus, source_dt, target_dt)
-        state = self.model.initial_state(
-            self.n_nodes, device=self.device, dtype=torch.float32
-        )
-        activity = torch.zeros((self.n_nodes, 4), device=self.device)
+        state, activity = self.initial_recurrent_state()
         current = torch.zeros_like(activity)
         central_activity = []
         record_index_tensor = None
@@ -154,26 +194,12 @@ class AxoSimFlyVis:
                 block = np.concatenate(
                     (block, np.repeat(block[-1:], 4 - len(block), axis=0)), axis=0
                 )
-            photoreceptors = np.tile(block, (1, 8))
-            activity.index_copy_(
-                0,
-                self.input_index,
-                torch.as_tensor(photoreceptors.T, device=self.device),
-            )
-            messages = (
-                activity.index_select(0, self.source)
-                * self.weight[:, None]
-                * self.edge_current_gain
-            )
-            current.zero_().index_add_(0, self.target, messages)
-            forecast, state = self.model.step_p4(
-                current.unsqueeze(-1) * self.route_feature,
+            state, activity = self.advance_block(
+                block,
                 state,
-                adaptation_cache=self.adaptation_cache,
+                activity,
+                current=current,
             )
-            activity = forecast[..., 1]
-            if not torch.isfinite(activity).all():
-                raise RuntimeError("Nonfinite AxoSim visual-circuit activity")
             central_activity.append(activity[self.central_index].T.cpu().numpy())
             if record_index_tensor is not None:
                 recorded_activity.append(

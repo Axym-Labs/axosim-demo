@@ -47,7 +47,7 @@ PALETTE = (
 
 
 def _number(value):
-    return format(float(value), ".7g")
+    return format(float(value), ".7g").replace("e+", "e")
 
 
 def _escape(value):

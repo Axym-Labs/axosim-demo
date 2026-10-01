@@ -1,0 +1,36 @@
+{
+  "scope": "Full-recurrent-state perturbation-and-return test under six constant visual inputs",
+  "vision_config": "configs/flyvis_moving_edge.json",
+  "scored_summary": "data/vision_axosim/summary.json",
+  "natural_manifold_config": "configs/natural_manifold_spatial.json",
+  "scenes": [
+    "apple-on-table",
+    "voyager-earth",
+    "woodland-clearing",
+    "ocean-surface",
+    "city-pedestrians-a",
+    "voyager-jupiter"
+  ],
+  "settling_seconds": 4.0,
+  "reference_orbit_seconds": 0.5,
+  "post_perturbation_seconds": 3.0,
+  "distance_sample_seconds": 0.02,
+  "perturbation": {
+    "amplitudes_in_orbit_standard_deviations": [0.1, 0.25],
+    "seeds": [1101, 1102, 1103, 1104, 1105],
+    "minimum_component_scale": 1e-06,
+    "components": "all AxoSim hidden-state and propagated-activity values of the non-clamped recurrent cells"
+  },
+  "return_test": {
+    "late_window_seconds": [2.0, 3.0],
+    "control_distance_quantile": 0.95,
+    "late_tolerance_as_initial_fraction": 0.05,
+    "maximum_median_excess_ratio": 0.2,
+    "maximum_bootstrap_upper_excess_ratio": 0.5,
+    "minimum_trial_return_fraction": 0.9,
+    "maximum_return_seconds": 2.5,
+    "required_consecutive_seconds": 0.5,
+    "bootstrap_repetitions": 10000,
+    "bootstrap_seed": 20261001
+  }
+}
