@@ -1,4 +1,5 @@
 """Run and render a 3D AxoSim visual-neuron manifold under real scenes."""
+
 from __future__ import annotations
 
 import argparse
@@ -6,18 +7,17 @@ import hashlib
 import json
 import math
 import os
-from pathlib import Path
 import time as time_module
+from pathlib import Path
 
 import imageio.v2 as imageio
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
-from scipy.ndimage import gaussian_filter, map_coordinates
+from scipy.ndimage import map_coordinates
 
 from .neural import DEFAULT_CHECKPOINT
 from .tikz_plot import FONT_PATH
 from .vision_axosim import AxoSimFlyVis
-
 
 DEFAULT_CONFIG = (
     Path(__file__).resolve().parents[2] / "configs/natural_manifold_spatial.json"
@@ -25,10 +25,6 @@ DEFAULT_CONFIG = (
 WIDTH, HEIGHT = 1280, 720
 INK = (32, 35, 42)
 MUTED = (96, 100, 109)
-LAYER_COLORS = np.asarray(
-    [(140, 122, 211), (61, 147, 163), (63, 33, 182), (211, 132, 39)],
-    dtype=np.float64,
-)
 
 
 def _sha256(path):
@@ -67,7 +63,7 @@ def _sample_scene(scene, *, duration, dt, retinal_x, retinal_y):
     fps = float(metadata["fps"])
     width, height = metadata["size"]
     start = float(scene["start_seconds"])
-    first = int(math.floor(start * fps))
+    first = math.floor(start * fps)
     time = np.arange(0, duration, dt, dtype=np.float64)
     positions = (start + time) * fps - first
     lower = np.floor(positions).astype(int)
@@ -83,25 +79,25 @@ def _sample_scene(scene, *, duration, dt, retinal_x, retinal_y):
             )
             array = np.asarray(rgb, dtype=np.float32) / 255
             luminance = (
-                0.2126 * array[..., 0]
-                + 0.7152 * array[..., 1]
-                + 0.0722 * array[..., 2]
+                0.2126 * array[..., 0] + 0.7152 * array[..., 1] + 0.0722 * array[..., 2]
             )
             frames.append(
-                map_coordinates(
-                    luminance, (pixel_y, pixel_x), order=1, mode="nearest"
-                )
+                map_coordinates(luminance, (pixel_y, pixel_x), order=1, mode="nearest")
             )
     finally:
         reader.close()
     frames = np.asarray(frames, dtype=np.float32)
     alpha = (positions - lower)[:, None]
     stimulus = frames[lower] * (1 - alpha) + frames[lower + 1] * alpha
-    return stimulus.astype(np.float32), time, {
-        "fps": fps,
-        "source_size": [width, height],
-        "decoded_frame_range_inclusive": [first, last],
-    }
+    return (
+        stimulus.astype(np.float32),
+        time,
+        {
+            "fps": fps,
+            "source_size": [width, height],
+            "decoded_frame_range_inclusive": [first, last],
+        },
+    )
 
 
 def _classify_scene(activity, time, contract):
@@ -111,7 +107,7 @@ def _classify_scene(activity, time, contract):
     from sklearn.preprocessing import StandardScaler
 
     cfg = contract["classification"]
-    step = int(round(cfg["sample_seconds"] / contract["source_dt_seconds"]))
+    step = round(cfg["sample_seconds"] / contract["source_dt_seconds"])
     train_lo, train_hi = cfg["train_seconds"]
     test_lo, test_hi = cfg["test_seconds"]
     sampled_time = time[::step]
@@ -145,12 +141,12 @@ def _classify_scene(activity, time, contract):
 
 def _embed_states(activity, time, contract):
     """Embed population states, so every manifold point is one moment in time."""
+    import umap
     from sklearn.decomposition import PCA
     from sklearn.manifold import trustworthiness
-    import umap
 
     cfg = contract["embedding"]
-    step = int(round(cfg["sample_seconds"] / contract["source_dt_seconds"]))
+    step = round(cfg["sample_seconds"] / contract["source_dt_seconds"])
     sampled_time = time[::step]
     mask = sampled_time >= contract["warmup_seconds"]
     sampled_time = sampled_time[mask]
@@ -190,13 +186,18 @@ def _embed_states(activity, time, contract):
         )
     )
     embedding = flat_embedding.reshape(len(activity), len(sampled_time), 3)
-    return embedding, sampled_time.astype(np.float32), pca_values, {
-        "constant_features": int(constant.sum()),
-        "pca_explained_variance_ratio_sum": float(
-            pca.explained_variance_ratio_.sum()
-        ),
-        "trustworthiness": quality,
-    }
+    return (
+        embedding,
+        sampled_time.astype(np.float32),
+        pca_values,
+        {
+            "constant_features": int(constant.sum()),
+            "pca_explained_variance_ratio_sum": float(
+                pca.explained_variance_ratio_.sum()
+            ),
+            "trustworthiness": quality,
+        },
+    )
 
 
 def _analyze_settling_and_oscillation(
@@ -211,10 +212,10 @@ def _analyze_settling_and_oscillation(
     from sklearn.decomposition import PCA
 
     cfg = contract["dynamics"]
-    natural_indices = [
+    image_indices = [
         index
         for index, scene in enumerate(contract["scenes"])
-        if scene["kind"] == "natural-image"
+        if scene["kind"] in {"natural-image", "voyager-record"}
     ]
     state = pca_values.reshape(len(activity), len(state_time), -1)[..., :10]
     transition = (state_time >= cfg["transition_approach_seconds"][0]) & (
@@ -230,7 +231,7 @@ def _analyze_settling_and_oscillation(
         time < cfg["oscillation_seconds"][1]
     )
     per_scene = []
-    for scene_index in natural_indices:
+    for scene_index in image_indices:
         reference = state[scene_index, orbit]
         approach_ratio = None
         if scene_index > 0:
@@ -286,11 +287,8 @@ def _analyze_settling_and_oscillation(
             or scene["transition_to_post_transition_orbit_distance_ratio"]
             >= cfg["minimum_orbit_approach_ratio"]
         )
-        and scene["peak_frequency_drift_hz"]
-        <= cfg["maximum_peak_frequency_drift_hz"]
-        and min(
-            half["peak_power_fraction"] for half in scene["spectral_halves"]
-        )
+        and scene["peak_frequency_drift_hz"] <= cfg["maximum_peak_frequency_drift_hz"]
+        and min(half["peak_power_fraction"] for half in scene["spectral_halves"])
         >= cfg["minimum_peak_power_fraction"]
         and cfg["amplitude_ratio"][0]
         <= scene["amplitude_ratio"]
@@ -299,7 +297,7 @@ def _analyze_settling_and_oscillation(
     )
     return {
         "passed": passed,
-        "scope": "five cross-image transitions followed by six sustained natural-image intervals",
+        "scope": f"{len(per_scene) - 1} cross-image transitions followed by {len(per_scene)} sustained image intervals",
         "interpretation": "population states approach a late recurrent orbit across each image transition and retain a stable dominant oscillation under constant visual input",
         "claim_boundary": "descriptive evidence for a stable oscillatory trajectory; a limit-cycle attractor requires perturbation-and-return validation",
         "method": cfg,
@@ -342,7 +340,10 @@ def run_experiment(
     )
     layers = tuple(contract["record_layers"])
     record_index = np.concatenate(
-        [np.asarray(getattr(network.connectome.nodes.layer_index, name)[:]) for name in layers]
+        [
+            np.asarray(getattr(network.connectome.nodes.layer_index, name)[:])
+            for name in layers
+        ]
     )
     u, v, retinal_x, retinal_y = _retinal_coordinates(network)
     stimuli, media = [], []
@@ -362,11 +363,9 @@ def run_experiment(
         if normalization is not None:
             frame_mean = stimulus.mean(axis=1, keepdims=True)
             frame_std = stimulus.std(axis=1, keepdims=True)
-            stimulus = (
-                (stimulus - frame_mean) / np.maximum(frame_std, 1e-6)
-                * float(normalization["standard_deviation"])
-                + float(normalization["mean"])
-            )
+            stimulus = (stimulus - frame_mean) / np.maximum(frame_std, 1e-6) * float(
+                normalization["standard_deviation"]
+            ) + float(normalization["mean"])
             stimulus = np.clip(
                 stimulus,
                 float(normalization["clip"][0]),
@@ -379,9 +378,8 @@ def run_experiment(
     # one second of leading context. The first context initializes the circuit;
     # later contexts overlap the previous segment's completed transition, so
     # they are not advanced twice. The analysis windows retain that preceding
-    # second, producing eight overlapping 16-second views into one 121-second
-    # AxoSim trajectory without a hidden state reset at a visible boundary.
-    warmup_steps = int(round(float(contract["warmup_seconds"]) / source_dt))
+    # second and introduce no hidden-state reset at a visible boundary.
+    warmup_steps = round(float(contract["warmup_seconds"]) / source_dt)
     stride = len(time) - warmup_steps
     continuous_stimulus = np.concatenate(
         [stimuli[0], *[stimulus[warmup_steps:] for stimulus in stimuli[1:]]]
@@ -436,32 +434,6 @@ def run_experiment(
         state_time,
         contract,
     )
-    low = np.quantile(dynamic, 0.05, axis=(0, 1)).reshape(-1).astype(np.float32)
-    high = np.quantile(dynamic, 0.95, axis=(0, 1)).reshape(-1).astype(np.float32)
-    flat_activity = dynamic.reshape(len(dynamic), len(dynamic[0]), -1)
-    normalized = np.clip(
-        (flat_activity - low) / np.maximum(high - low, 1e-6), 0, 1
-    )
-    smoothed = np.asarray(
-        [_causal_envelope(scene, dt=source_dt) for scene in normalized]
-    )
-    emphasized = np.asarray([_activity_emphasis(scene) for scene in smoothed])
-    display_fps = int(contract.get("display_fps", 30))
-    display_start = max(float(contract["warmup_seconds"]), 1.0)
-    display_time = np.arange(
-        display_start,
-        float(contract["duration_seconds"]),
-        1 / display_fps,
-        dtype=np.float64,
-    )
-    display_indices = np.clip(
-        np.round(display_time / source_dt).astype(np.int64),
-        0,
-        emphasized.shape[1] - 1,
-    )
-    display_retinal_activity = emphasized[:, display_indices].reshape(
-        len(dynamic), len(display_time), len(layers), 721
-    )[:, :, 2:].max(axis=2).astype(np.float32)
     advantage = dynamic_score["balanced_accuracy"] - uniform_score["balanced_accuracy"]
     gate = (
         dynamic_score["balanced_accuracy"]
@@ -487,16 +459,12 @@ def run_experiment(
     np.savez_compressed(
         output / "manifold-recording.npz",
         uniform_classification_activity=uniform[
-            :, :: int(round(contract["classification"]["sample_seconds"] / source_dt))
+            :, :: round(contract["classification"]["sample_seconds"] / source_dt)
         ].astype(np.float32),
         time=time,
         state_embedding=state_embedding,
         state_time=state_time,
         pca=pca_values,
-        display_retinal_activity=display_retinal_activity,
-        display_time=display_time.astype(np.float32),
-        activity_low=low,
-        activity_high=high,
         layer_index=np.repeat(np.arange(len(layers)), 721),
         u=u,
         v=v,
@@ -507,7 +475,7 @@ def run_experiment(
         "core_sha256": _sha256(output / "manifold-recording.npz"),
         "dynamic_shards": shards,
         "raw_dynamic_total_bytes": int(sum(item["bytes"] for item in shards)),
-        "packaging": "raw 5 ms shards are hash-pinned and regenerable; the compact core contains exact 30 fps display samples and embedding coordinates",
+        "packaging": "raw 5 ms shards are hash-pinned and regenerable; the compact core contains exact 25 ms score samples and embedding coordinates",
     }
     (output / "recording-manifest.json").write_text(
         json.dumps(recording_manifest, indent=2) + "\n"
@@ -515,7 +483,7 @@ def run_experiment(
     report = {
         "status": "complete",
         "passed": gate and dynamics["passed"],
-        "scope": "3D neuron-response manifold for frozen AxoSim visual-circuit activity under natural and synthetic visual stimuli",
+        "scope": "3D neuron-response manifold for frozen AxoSim visual-circuit activity under natural scenes and Voyager Golden Record images",
         "claim_boundary": "visual separability and visualization; not anatomy, calibrated fly physiology, camera control, or behavior",
         "config_sha256": _sha256(config),
         "checkpoint_sha256": scored["axosim_checkpoint_sha256"],
@@ -535,17 +503,21 @@ def run_experiment(
         "uniform_luminance_classification": uniform_score,
         "stimulus_minus_uniform_balanced_accuracy": advantage,
         "gate": {
-            "minimum_stimulus_balanced_accuracy": contract["classification"]["minimum_stimulus_balanced_accuracy"],
-            "minimum_advantage_over_uniform": contract["classification"]["minimum_advantage_over_uniform"],
+            "minimum_stimulus_balanced_accuracy": contract["classification"][
+                "minimum_stimulus_balanced_accuracy"
+            ],
+            "minimum_advantage_over_uniform": contract["classification"][
+                "minimum_advantage_over_uniform"
+            ],
             "passed": gate,
         },
         "embedding": {
             **contract["embedding"],
             **embedding_metrics,
-            "object": f"one point per sampled 2,884-neuron population state; {len(contract['scenes'])} fixed trajectories correspond to natural and synthetic stimulus segments",
+            "object": f"one point per sampled 2,884-neuron population state; {len(contract['scenes'])} fixed trajectories correspond to natural-scene and Voyager image segments",
         },
         "settling_and_oscillation": dynamics,
-        "temporal_execution": "one continuous 121-second AxoSim run; eight overlapping analysis windows retain one second of preceding transition context and contain no state reset at a visible boundary",
+        "temporal_execution": f"one continuous {float(contract['warmup_seconds']) + len(contract['scenes']) * (float(contract['duration_seconds']) - float(contract['warmup_seconds'])):.0f}-second AxoSim run; {len(contract['scenes'])} overlapping analysis windows retain one second of preceding transition context and contain no state reset at a visible boundary",
         "uniform_control_storage": "one continuous exact mean-gray control run is retained and windowed at the same absolute times as the stimulus program",
         "raw_recording": {
             "manifest": "recording-manifest.json",
@@ -598,37 +570,14 @@ def _project(points):
     return np.column_stack((x, y)), rotated[:, 2], perspective
 
 
-def _causal_envelope(values, *, dt, attack_seconds=0.16, decay_seconds=0.55):
-    """Smooth activity causally with a quick attack and persistent decay."""
-    output = np.empty_like(values, dtype=np.float32)
-    output[0] = values[0]
-    attack = 1 - math.exp(-dt / attack_seconds)
-    decay = 1 - math.exp(-dt / decay_seconds)
-    for index in range(1, len(values)):
-        rate = np.where(values[index] >= output[index - 1], attack, decay)
-        output[index] = output[index - 1] + rate * (
-            values[index] - output[index - 1]
-        )
-    return output
-
-
 def _causal_smooth_path(points, *, dt, time_constant_seconds=0.18):
     """Low-pass a displayed trajectory without consulting future states."""
     output = np.empty_like(points, dtype=np.float32)
     output[0] = points[0]
     rate = 1 - math.exp(-dt / time_constant_seconds)
     for index in range(1, len(points)):
-        output[index] = output[index - 1] + rate * (
-            points[index] - output[index - 1]
-        )
+        output[index] = output[index - 1] + rate * (points[index] - output[index - 1])
     return output
-
-
-def _activity_emphasis(values):
-    """Convert smooth activity into a continuous, legible within-frame field."""
-    low = np.quantile(values, 0.52, axis=1, keepdims=True)
-    high = np.quantile(values, 0.985, axis=1, keepdims=True)
-    return np.clip((values - low) / np.maximum(high - low, 1e-6), 0, 1)
 
 
 def _ramp(level):
@@ -645,52 +594,15 @@ def _ramp(level):
     ).astype(int)
 
 
-def _retinal_coordinates_from_recording(u, v):
-    x = u.astype(np.float64) + v.astype(np.float64) / 2
-    y = v.astype(np.float64) * math.sqrt(3) / 2
-    x /= np.max(np.abs(x))
-    y /= np.max(np.abs(y))
-    return (0.5 + 0.47 * x) * WIDTH, (0.5 + 0.47 * y) * HEIGHT
-
-
-def _draw_retinal_field(image, levels, retinal_x, retinal_y):
-    """Render measured retinotopic response as a continuous activation field."""
-    scale = 4
-    field_height, field_width = HEIGHT // scale, WIDTH // scale
-    field = np.zeros((field_height, field_width), dtype=np.float32)
-    x = np.clip(np.rint(retinal_x / scale).astype(int), 0, field_width - 1)
-    y = np.clip(np.rint(retinal_y / scale).astype(int), 0, field_height - 1)
-    response = np.clip((levels - 0.18) / 0.82, 0, 1) ** 1.7
-    np.add.at(field, (y, x), response)
-    field = gaussian_filter(field, sigma=5.5)
-    maximum = float(field.max())
-    if maximum <= 1e-9:
-        return
-    field = np.clip(field / maximum, 0, 1)
-    field = np.clip((field - 0.08) / 0.92, 0, 1)
-
-    # Keep the retinal readout on the footage side of the composition.
-    fade = np.clip(
-        (720 / scale - np.arange(field_width)) / (180 / scale), 0, 1
-    )
-    field *= fade[None, :]
-    palette = np.asarray(
-        [_ramp(value / 255) for value in range(256)], dtype=np.uint8
-    )
-    rgba = np.empty((field_height, field_width, 4), dtype=np.uint8)
-    rgba[..., :3] = palette[np.rint(field * 255).astype(np.uint8)]
-    rgba[..., 3] = np.rint(112 * field**1.25).astype(np.uint8)
-    overlay = Image.fromarray(rgba, "RGBA").resize(
-        (WIDTH, HEIGHT), Image.Resampling.BILINEAR
-    )
-    image.alpha_composite(overlay)
-
-
 def _draw_manifold(image, projected_paths, depth_paths, active_scene, trail):
     """Draw the fixed state manifold and a bright causal path through it."""
     draw = ImageDraw.Draw(image, "RGBA")
     for scene_index, path in enumerate(projected_paths):
-        valid = [tuple(point) for point in path if 650 <= point[0] < 1274 and 36 <= point[1] < 650]
+        valid = [
+            tuple(point)
+            for point in path
+            if 650 <= point[0] < 1274 and 36 <= point[1] < 650
+        ]
         if len(valid) > 1:
             alpha = 82 if scene_index == active_scene else 38
             draw.line(valid, fill=(121, 104, 181, alpha), width=2)
@@ -699,12 +611,16 @@ def _draw_manifold(image, projected_paths, depth_paths, active_scene, trail):
             x, y = path[point_index]
             if 650 <= x < 1274 and 36 <= y < 650:
                 alpha = 116 if scene_index == active_scene else 58
-                draw.ellipse((x - 1.7, y - 1.7, x + 1.7, y + 1.7), fill=(177, 171, 205, alpha))
+                draw.ellipse(
+                    (x - 1.7, y - 1.7, x + 1.7, y + 1.7), fill=(177, 171, 205, alpha)
+                )
 
     if len(trail) > 1:
         halo = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
         halo_draw = ImageDraw.Draw(halo, "RGBA")
-        halo_draw.line([tuple(point) for point in trail], fill=(225, 49, 161, 110), width=15)
+        halo_draw.line(
+            [tuple(point) for point in trail], fill=(225, 49, 161, 110), width=15
+        )
         halo = halo.filter(ImageFilter.GaussianBlur(10))
         image.alpha_composite(halo)
         draw = ImageDraw.Draw(image, "RGBA")
@@ -732,36 +648,8 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
     if report["status"] != "complete":
         raise ValueError("Manifold experiment is incomplete")
     with np.load(recording) as data:
-        dynamic = data["dynamic"].astype(np.float32) if "dynamic" in data else None
-        display_retinal_activity = (
-            data["display_retinal_activity"].astype(np.float32)
-            if "display_retinal_activity" in data
-            else None
-        )
         state_embedding = data["state_embedding"].astype(np.float32)
         state_time = data["state_time"].astype(np.float32)
-        low = data["activity_low"].astype(np.float32)
-        high = data["activity_high"].astype(np.float32)
-        u = data["u"].astype(np.int64)
-        v = data["v"].astype(np.int64)
-    emphasized = None
-    if dynamic is not None:
-        flat_activity = dynamic.reshape(len(dynamic), len(dynamic[0]), -1)
-        normalized = np.clip(
-            (flat_activity - low) / np.maximum(high - low, 1e-6), 0, 1
-        )
-        smoothed = np.asarray(
-            [
-                _causal_envelope(
-                    scene,
-                    dt=float(contract["source_dt_seconds"]),
-                )
-                for scene in normalized
-            ]
-        )
-        emphasized = np.asarray([_activity_emphasis(scene) for scene in smoothed])
-    elif display_retinal_activity is None:
-        raise ValueError("Recording contains neither raw nor display-sampled activity")
     state_embedding = _causal_smooth_path(
         state_embedding.reshape(-1, 3),
         dt=float(contract["embedding"]["sample_seconds"]),
@@ -776,11 +664,10 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
     projected_paths = np.asarray(projected_paths)
     depth_paths = np.asarray(depth_paths)
     continuous_projected_path = projected_paths.reshape(-1, 2)
-    retinal_x, retinal_y = _retinal_coordinates_from_recording(u, v)
     display_start = max(float(contract["warmup_seconds"]), 1.0)
     scene_seconds = float(contract["duration_seconds"]) - display_start
     total_seconds = len(contract["scenes"]) * scene_seconds
-    total_frames = int(round(total_seconds * fps))
+    total_frames = round(total_seconds * fps)
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     readers = [imageio.get_reader(scene["path"]) for scene in contract["scenes"]]
@@ -811,10 +698,8 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
             local_time = display_start + global_time - scene_index * scene_seconds
             scene = contract["scenes"][scene_index]
             media = report["scenes"][scene_index]
-            source_position = (
-                scene["start_seconds"] + local_time
-            ) * media["fps"]
-            source_frame = int(math.floor(source_position))
+            source_position = (scene["start_seconds"] + local_time) * media["fps"]
+            source_frame = math.floor(source_position)
             source_alpha = source_position - source_frame
             frame_lower = Image.fromarray(
                 readers[scene_index].get_data(source_frame)
@@ -824,20 +709,6 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
             ).convert("RGBA")
             background = Image.blend(frame_lower, frame_upper, source_alpha)
             background = background.resize((WIDTH, HEIGHT), Image.Resampling.LANCZOS)
-            if emphasized is not None:
-                activity_index = min(
-                    int(round(local_time / contract["source_dt_seconds"])),
-                    emphasized.shape[1] - 1,
-                )
-                levels = emphasized[scene_index, activity_index]
-                t4_t5 = levels.reshape(4, 721)[2:].max(axis=0)
-            else:
-                scene_frame = min(
-                    int(round((local_time - display_start) * fps)),
-                    display_retinal_activity.shape[1] - 1,
-                )
-                t4_t5 = display_retinal_activity[scene_index, scene_frame]
-            _draw_retinal_field(background, t4_t5, retinal_x, retinal_y)
             background.alpha_composite(gradient)
             state_index = int(np.searchsorted(state_time, local_time, side="right") - 1)
             state_index = min(max(state_index, 0), len(state_time) - 1)
@@ -845,7 +716,7 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
             trail_start = max(
                 0,
                 global_state_index
-                - int(round(1.6 / contract["embedding"]["sample_seconds"])),
+                - round(1.6 / contract["embedding"]["sample_seconds"]),
             )
             trail = continuous_projected_path[trail_start : global_state_index + 1]
             _draw_manifold(
@@ -857,12 +728,11 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
             )
             draw = ImageDraw.Draw(background, "RGBA")
             draw.text(
-                (39, 671),
+                (WIDTH - 58, HEIGHT - 46),
                 "AxoSim - Axym Labs",
                 font=title_font,
                 fill=(255, 255, 255, 255),
-                stroke_width=1,
-                stroke_fill=(0, 0, 0, 150),
+                anchor="rs",
             )
             writer.append_data(np.asarray(background.convert("RGB")))
             if frame in (0, total_frames // 3, 2 * total_frames // 3, total_frames - 1):
@@ -890,13 +760,23 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
             "uniform": report["uniform_luminance_classification"],
         },
         "embedding": report["embedding"],
-        "display": "fixed-camera temporal 3D UMAP; every point is one 2,884-neuron population state from a continuous AxoSim run; persistent full trajectories; cross-boundary causal 180-ms display smoothing and causal 1.6-second current-state trail; strongest T4c/T5c responses at their retinal coordinates",
-        "activity_color": "violet-magenta-gold marks trail recency and T4c/T5c response strength; it never denotes cell type",
+        "display": "fixed-camera temporal 3D UMAP; every point is one 2,884-neuron population state from a continuous AxoSim run; persistent full trajectories; cross-boundary causal 180-ms display smoothing and causal 1.6-second current-state trail; no activity field is drawn over the source image",
+        "activity_color": "violet-magenta-gold marks trail recency only; it never denotes cell type",
         "display_start_seconds_per_scene": display_start,
         "camera_motion": False,
         "activity_blinking": False,
+        "source_image_activity_overlay": False,
         "neural_state_resets_at_visible_boundaries": False,
         "text_in_frame": ["AxoSim - Axym Labs"],
+        "title_style": {
+            "font": "Inter",
+            "fill_rgba": [255, 255, 255, 255],
+            "outline": False,
+            "anchor": "right baseline",
+            "position_pixels": [WIDTH - 58, HEIGHT - 46],
+            "right_margin_pixels": 58,
+            "bottom_baseline_margin_pixels": 46,
+        },
         "renderer": "Pillow custom perspective renderer with Inter; no Matplotlib",
         "encoding": "H.264 High, CRF 20, yuv420p, fast-start",
         "source_frame_sampling": "linear temporal interpolation at original playback speed; no segment looping or slow motion",

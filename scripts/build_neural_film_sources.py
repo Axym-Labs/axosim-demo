@@ -1,28 +1,32 @@
 #!/usr/bin/env python3
-"""Build the deterministic two-minute neural-film stimulus segments."""
+"""Build the deterministic two-minute image program for the neural film."""
+
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
 import math
-from pathlib import Path
 import urllib.request
+from pathlib import Path
 
 import imageio.v2 as imageio
 import numpy as np
 from PIL import Image, ImageFilter, ImageOps
 
-
 FPS = 30
-DURATION_SECONDS = 16.0
+DURATION_SECONDS = 6.0
 WARMUP_SECONDS = 1.0
-DISPLAY_SECONDS = 15.0
-TRANSITION_SECONDS = 3.0
+DISPLAY_SECONDS = 5.0
+TRANSITION_SECONDS = 1.0
 SIZE = (960, 540)
-SEED = 20261001
 APPLE_URL = "https://upload.wikimedia.org/wikipedia/commons/9/9e/Apple_on_table.jpg"
 APPLE_PAGE = "https://commons.wikimedia.org/wiki/File:Apple_on_table.jpg"
+APPLE_SHA256 = "1e716e7849d6e5959cbfa06847e37b01edd0ef044c02f2de022435d7b2ac312e"
+VOYAGER_CATALOG = (
+    "https://science.nasa.gov/mission/voyager/golden-record-contents/images/"
+)
+
 VIDEO_SOURCES = {
     "woodland": {
         "file": "woodland.mp4",
@@ -43,10 +47,120 @@ VIDEO_SOURCES = {
         "creator": "Ali Alcántara",
     },
 }
-COLORS = (
-    np.asarray((74, 30, 160), dtype=np.uint8),
-    np.asarray((218, 51, 136), dtype=np.uint8),
-    np.asarray((245, 173, 67), dtype=np.uint8),
+
+# Commons includes only the Golden Record images that are public-domain federal
+# works or too simple for copyright. Each file page records that determination.
+VOYAGER_SOURCES = (
+    {
+        "name": "voyager-earth",
+        "file": "earth.gif",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Voyager_golden_record_12_earth.gif",
+        "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_12_earth.gif",
+        "sha256": "d4e4f6b6579161a89e8a40f78908b325a037ffeba7765719ab3f8686501bb057",
+        "attribution": "NASA",
+    },
+    {
+        "name": "voyager-solar-spectrum",
+        "file": "spectra.gif",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/3/3b/Voyager_golden_record_8_spectra.gif",
+        "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_8_spectra.gif",
+        "sha256": "678dee913092f8b666d260bf86f74550cb7b63ee36d699ff0284977f7341bd3c",
+        "attribution": "National Astronomy and Ionosphere Center",
+    },
+    {
+        "name": "voyager-mercury",
+        "file": "mercury.gif",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/f/f6/Voyager_golden_record_9_mercury.gif",
+        "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_9_mercury.gif",
+        "sha256": "5165a6a8f9c56c74b3ca57ea50ac9b9439346d502b81e4d2e11356d141e52dee",
+        "attribution": "NASA",
+    },
+    {
+        "name": "voyager-mars",
+        "file": "mars.gif",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Voyager_golden_record_10_mars.gif",
+        "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_10_mars.gif",
+        "sha256": "0fab8fb7593e0af559e8ca283a2c5bceacf561a73b9de2f3e1e217da41c5cb0b",
+        "attribution": "NASA",
+    },
+    {
+        "name": "voyager-jupiter",
+        "file": "jupiter.gif",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/e/ec/Voyager_golden_record_11_jupiter.gif",
+        "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_11_jupiter.gif",
+        "sha256": "acce9bbcb980881433109327a210b3a80b0bb310a08ace7d162edb82a13bf663",
+        "attribution": "NASA",
+    },
+    {
+        "name": "voyager-earth-egypt",
+        "file": "earth-egypt.gif",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/9/9a/Voyager_golden_record_13_earth.gif",
+        "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_13_earth.gif",
+        "sha256": "51a5aad1371ff8b1ba15ff0edc6792ae6be15419d0586e2c26bb6d01b2349b22",
+        "attribution": "NASA",
+    },
+    {
+        "name": "voyager-supermarket",
+        "file": "supermarket.gif",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/d/df/Voyager_golden_record_77_supermarket.gif",
+        "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_77_supermarket.gif",
+        "sha256": "4aab5644742f3003edc9d313feed432ebcc10687ac0fbaadd13aebe3da74529a",
+        "attribution": "NASA Ames Research Center",
+    },
+    {
+        "name": "voyager-eating-and-drinking",
+        "file": "eating-drinking.gif",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/1/1f/Voyager_golden_record_82_feeding.gif",
+        "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_82_feeding.gif",
+        "sha256": "8fe08a11b4898995063bd87b14e6ba5e6380fdb09dca8d2a220610c3b9d92b3d",
+        "attribution": "National Astronomy and Ionosphere Center",
+    },
+    {
+        "name": "voyager-xray-hand",
+        "file": "xray-hand.gif",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/b/b0/Voyager_golden_record_99_xray.gif",
+        "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_99_xray.gif",
+        "sha256": "51401f6199274153be1b34d317f63db4183c9608fdbce05c654fadaef7fe470f",
+        "attribution": "National Astronomy and Ionosphere Center",
+    },
+    {
+        "name": "voyager-modern-highway",
+        "file": "highway.gif",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Voyager_golden_record_103_highway.gif",
+        "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_103_highway.gif",
+        "sha256": "7f34df32a39cc8ffc38e8e17a2a7cc035a8d70e1ba84d3d85002508d704f3a5a",
+        "attribution": "National Astronomy and Ionosphere Center",
+    },
+    {
+        "name": "voyager-arecibo",
+        "file": "arecibo.gif",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/1/18/Voyager_golden_record_110_arecibo.gif",
+        "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_110_arecibo.gif",
+        "sha256": "5810b6e8e081c39019af8e1d2f8a339c4b124eed850ad4e8c6e63351d9969a55",
+        "attribution": "National Astronomy and Ionosphere Center",
+    },
+    {
+        "name": "voyager-astronaut",
+        "file": "astronaut.gif",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/2/26/Voyager_golden_record_112_astronaut.gif",
+        "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_112_astronaut.gif",
+        "sha256": "78369f7537c6f0df6a0e8bef71f09d8c79428b32772808e64c8c1e4ecd27fc38",
+        "attribution": "NASA",
+    },
+)
+
+NATURAL_STILLS = (
+    ("woodland-clearing", "woodland", 3.0),
+    ("ocean-surface", "ocean", 2.0),
+    ("woodland-canopy", "woodland", 10.0),
+    ("city-pedestrians-a", "city", 1.0),
+    ("ocean-waves", "ocean", 7.0),
+    ("woodland-path", "woodland", 18.0),
+    ("city-pedestrians-b", "city", 3.5),
+    ("ocean-horizon", "ocean", 12.0),
+    ("woodland-grove", "woodland", 28.0),
+    ("woodland-trees", "woodland", 38.0),
+    ("woodland-trail", "woodland", 48.0),
 )
 
 
@@ -56,6 +170,19 @@ def sha256(path: Path) -> str:
         for block in iter(lambda: handle.read(1 << 20), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def download_pinned(path: Path, url: str, expected_sha256: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not path.exists():
+        request = urllib.request.Request(
+            url,
+            headers={"User-Agent": "AxoSimDemo/1.0 (https://axym.org)"},
+        )
+        with urllib.request.urlopen(request) as response:
+            path.write_bytes(response.read())
+    if sha256(path) != expected_sha256:
+        raise ValueError(f"Source hash mismatch for {path}")
 
 
 def fit_image(path: Path) -> Image.Image:
@@ -68,7 +195,7 @@ def video_frame(path: Path, seconds: float) -> Image.Image:
     try:
         fps = float(reader.get_meta_data()["fps"])
         position = seconds * fps
-        lower = int(math.floor(position))
+        lower = math.floor(position)
         alpha = position - lower
         first = Image.fromarray(reader.get_data(lower)).convert("RGB")
         second = Image.fromarray(reader.get_data(lower + 1)).convert("RGB")
@@ -76,10 +203,6 @@ def video_frame(path: Path, seconds: float) -> Image.Image:
         reader.close()
     image = Image.blend(first, second, alpha)
     return ImageOps.fit(image, SIZE, method=Image.Resampling.LANCZOS)
-
-
-def solid_color(rgb: np.ndarray) -> Image.Image:
-    return Image.new("RGB", SIZE, tuple(int(value) for value in rgb))
 
 
 def crossfade(previous: Image.Image, current: Image.Image, alpha: float) -> Image.Image:
@@ -92,26 +215,8 @@ def crossfade(previous: Image.Image, current: Image.Image, alpha: float) -> Imag
     return Image.blend(previous, current, eased)
 
 
-class NoiseSource:
-    def __init__(self, seed: int):
-        self.seed = seed
-
-    def _key(self, index: int) -> np.ndarray:
-        rng = np.random.default_rng(self.seed + index)
-        return rng.integers(0, 256, size=(45, 80, 3), dtype=np.uint8).astype(np.float32)
-
-    def frame(self, seconds: float) -> Image.Image:
-        position = max(seconds, 0) * 6
-        lower = int(math.floor(position))
-        alpha = position - lower
-        alpha = alpha * alpha * (3 - 2 * alpha)
-        array = self._key(lower) * (1 - alpha) + self._key(lower + 1) * alpha
-        image = Image.fromarray(array.astype(np.uint8), "RGB")
-        image = image.filter(ImageFilter.GaussianBlur(1.1))
-        return image.resize(SIZE, Image.Resampling.BICUBIC)
-
-
-def write_segment(path: Path, frame_at) -> None:
+def write_segment(path: Path, current: Image.Image, following: Image.Image) -> None:
+    transition_start = WARMUP_SECONDS + DISPLAY_SECONDS - TRANSITION_SECONDS
     writer = imageio.get_writer(
         path,
         fps=FPS,
@@ -122,48 +227,18 @@ def write_segment(path: Path, frame_at) -> None:
     )
     try:
         for frame_index in range(round(DURATION_SECONDS * FPS) + 1):
-            writer.append_data(np.asarray(frame_at(frame_index / FPS)))
+            seconds = frame_index / FPS
+            if seconds < transition_start:
+                frame = current
+            else:
+                frame = crossfade(
+                    current,
+                    following,
+                    (seconds - transition_start) / TRANSITION_SECONDS,
+                )
+            writer.append_data(np.asarray(frame))
     finally:
         writer.close()
-
-
-def image_slot(current: Image.Image, following: Image.Image):
-    transition_start = WARMUP_SECONDS + DISPLAY_SECONDS - TRANSITION_SECONDS
-
-    def frame_at(seconds: float) -> Image.Image:
-        if seconds < transition_start:
-            return current
-        alpha = (seconds - transition_start) / TRANSITION_SECONDS
-        return crossfade(current, following, alpha)
-
-    return frame_at
-
-
-def color_slot(violet: Image.Image, magenta: Image.Image, gold: Image.Image):
-    def frame_at(seconds: float) -> Image.Image:
-        display = max(seconds - WARMUP_SECONDS, 0.0)
-        if display < 3:
-            return violet
-        if display < 6:
-            return crossfade(violet, magenta, (display - 3) / 3)
-        if display < 9:
-            return magenta
-        if display < 12:
-            return crossfade(magenta, gold, (display - 9) / 3)
-        return gold
-
-    return frame_at
-
-
-def noise_slot(gold: Image.Image, noise: NoiseSource):
-    def frame_at(seconds: float) -> Image.Image:
-        display = max(seconds - WARMUP_SECONDS, 0.0)
-        current = noise.frame(display)
-        if display < TRANSITION_SECONDS:
-            return crossfade(gold, current, display / TRANSITION_SECONDS)
-        return current
-
-    return frame_at
 
 
 def main() -> None:
@@ -185,74 +260,97 @@ def main() -> None:
     )
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
-    args.apple.parent.mkdir(parents=True, exist_ok=True)
-    if not args.apple.exists():
-        request = urllib.request.Request(
-            APPLE_URL,
-            headers={"User-Agent": "AxoSimDemo/1.0 (https://axym.org)"},
-        )
-        with urllib.request.urlopen(request) as response:
-            args.apple.write_bytes(response.read())
+    for stale in args.output.glob("segment-*.mp4"):
+        stale.unlink()
 
+    download_pinned(args.apple, APPLE_URL, APPLE_SHA256)
     video_paths = {
-        name: args.source_dir / source["file"]
-        for name, source in VIDEO_SOURCES.items()
+        name: args.source_dir / source["file"] for name, source in VIDEO_SOURCES.items()
     }
     for name, path in video_paths.items():
         if sha256(path) != VIDEO_SOURCES[name]["sha256"]:
             raise ValueError(f"Video hash mismatch for {name}")
-    still_specs = [
-        ("woodland-clearing", "woodland", 3.0),
-        ("woodland-canopy", "woodland", 20.0),
-        ("woodland-path", "woodland", 40.0),
-        ("ocean-waves", "ocean", 5.0),
-        ("city-street", "city", 2.0),
-    ]
+
+    voyager_dir = args.source_dir / "voyager"
+    voyager_images = []
+    for source in VOYAGER_SOURCES:
+        path = voyager_dir / source["file"]
+        download_pinned(path, source["url"], source["sha256"])
+        voyager_images.append(fit_image(path))
+
     natural_images = [
         video_frame(video_paths[source], seconds)
-        for _, source, seconds in still_specs
+        for _, source, seconds in NATURAL_STILLS
     ]
-    natural_images.append(fit_image(args.apple))
-    violet, magenta, gold = [solid_color(color) for color in COLORS]
+    apple = fit_image(args.apple)
+    natural_items = [
+        {"name": name, "kind": "natural-image", "image": image}
+        for (name, _, _), image in zip(NATURAL_STILLS, natural_images)
+    ]
+    voyager_items = [
+        {"name": source["name"], "kind": "voyager-record", "image": image}
+        for source, image in zip(VOYAGER_SOURCES, voyager_images)
+    ]
 
-    frame_functions = [
-        image_slot(image, following)
-        for image, following in zip(natural_images, natural_images[1:] + [violet])
+    # Apple, one Voyager image, two natural scenes, then alternating batches of
+    # three Voyager and three natural images. The final Voyager batch uses two
+    # slots so the program contains exactly 24 five-second intervals.
+    items = [
+        {"name": "apple-on-table", "kind": "natural-image", "image": apple},
+        voyager_items[0],
+        natural_items[0],
+        natural_items[1],
+        *voyager_items[1:4],
+        *natural_items[2:5],
+        *voyager_items[4:7],
+        *natural_items[5:8],
+        *voyager_items[7:10],
+        *natural_items[8:11],
+        *voyager_items[10:12],
     ]
-    frame_functions.extend(
-        [
-            color_slot(violet, magenta, gold),
-            noise_slot(gold, NoiseSource(SEED)),
-        ]
-    )
-    names = [
-        "woodland-clearing",
-        "woodland-canopy",
-        "woodland-path",
-        "ocean-waves",
-        "city-street",
-        "apple-on-table",
-        "three-colors",
-        "random-noise",
+    expected_kinds = [
+        "natural-image",
+        "voyager-record",
+        "natural-image",
+        "natural-image",
+        *(["voyager-record"] * 3),
+        *(["natural-image"] * 3),
+        *(["voyager-record"] * 3),
+        *(["natural-image"] * 3),
+        *(["voyager-record"] * 3),
+        *(["natural-image"] * 3),
+        *(["voyager-record"] * 2),
     ]
-    kinds = ["natural-image"] * 6 + ["static-colors", "random-noise"]
+    if len(items) != 24 or [item["kind"] for item in items] != expected_kinds:
+        raise RuntimeError("The frozen 24-slot stimulus order is invalid")
+
     scenes = []
-    for index, (name, kind, frame_at) in enumerate(zip(names, kinds, frame_functions)):
-        path = args.output / f"segment-{index + 1:02d}-{name}.mp4"
+    for index, item in enumerate(items):
+        following = items[(index + 1) % len(items)]["image"]
+        path = args.output / f"segment-{index + 1:02d}-{item['name']}.mp4"
         print(f"building {path}", flush=True)
-        write_segment(path, frame_at)
+        write_segment(path, item["image"], following)
         scenes.append(
             {
-                "name": name,
-                "kind": kind,
+                "name": item["name"],
+                "kind": item["kind"],
                 "path": str(path),
                 "duration_seconds": DURATION_SECONDS,
                 "sha256": sha256(path),
             }
         )
 
-    source_records = []
-    for name, source, seconds in still_specs:
+    source_records = [
+        {
+            "name": "apple-on-table",
+            "path": str(args.apple),
+            "sha256": sha256(args.apple),
+            "page": APPLE_PAGE,
+            "license": "public domain",
+            "attribution": "Kim Siever",
+        }
+    ]
+    for name, source, seconds in NATURAL_STILLS:
         record = VIDEO_SOURCES[source]
         source_records.append(
             {
@@ -265,36 +363,37 @@ def main() -> None:
                 "attribution": record["creator"],
             }
         )
-    source_records.append(
-        {
-            "name": "Apple on table",
-            "path": str(args.apple),
-            "sha256": sha256(args.apple),
-            "page": APPLE_PAGE,
-            "license": "public-domain",
-            "attribution": "Kim Siever",
-        }
-    )
+    for source in VOYAGER_SOURCES:
+        source_records.append(
+            {
+                "name": source["name"],
+                "path": str(voyager_dir / source["file"]),
+                "sha256": source["sha256"],
+                "page": source["page"],
+                "catalog": VOYAGER_CATALOG,
+                "license": "public domain",
+                "attribution": source["attribution"],
+            }
+        )
+
     manifest = {
         "fps": FPS,
         "resolution": list(SIZE),
         "duration_seconds_per_segment": DURATION_SECONDS,
         "display_seconds_per_segment": DISPLAY_SECONDS,
         "total_display_seconds": len(scenes) * DISPLAY_SECONDS,
+        "sequence_rule": "apple; one Voyager; two natural; alternating three-Voyager and three-natural batches; final two-Voyager partial batch",
         "transition": {
             "seconds": TRANSITION_SECONDS,
             "method": "smoothstep RGB interpolation with symmetric Gaussian blur",
-            "placement": "the final three seconds of each image slot; the first three seconds of the noise slot",
+            "placement": "final one second of every five-second image interval",
         },
-        "color_sequence": {
-            "colors_rgb": [color.tolist() for color in COLORS],
-            "schedule": "3 s color, 3 s transition, 3 s color, 3 s transition, 3 s color",
-        },
-        "random_seed": SEED,
         "sources": source_records,
         "scenes": scenes,
     }
-    (args.output / "program-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    (args.output / "program-manifest.json").write_text(
+        json.dumps(manifest, indent=2) + "\n"
+    )
     print(json.dumps(manifest, indent=2))
 
 

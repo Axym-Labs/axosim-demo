@@ -1,9 +1,9 @@
 {
-  "scope": "Frozen 3D neuron manifold under six real-world images, three static colors, and seeded random noise",
+  "scope": "Frozen 3D neuron manifold under twelve existing naturalistic images and twelve Voyager Golden Record images",
   "vision_config": "configs/flyvis_moving_edge.json",
   "scored_summary": "data/vision_axosim/summary.json",
   "source_dt_seconds": 0.005,
-  "duration_seconds": 16.0,
+  "duration_seconds": 6.0,
   "warmup_seconds": 1.0,
   "record_layers": [
     "L1",
@@ -22,95 +22,255 @@
   },
   "scenes": [
     {
+      "name": "apple-on-table",
+      "kind": "natural-image",
+      "path": "data/natural_manifold/program-2min/segment-01-apple-on-table.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Apple_on_table.jpg",
+      "creator": "Kim Siever",
+      "license": "public domain",
+      "start_seconds": 0.0,
+      "sha256": "c8217db882e23b5853b844bdc4b68a9c8cd17a7cd844486628b4121b44918b80"
+    },
+    {
+      "name": "voyager-earth",
+      "kind": "voyager-record",
+      "path": "data/natural_manifold/program-2min/segment-02-voyager-earth.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_12_earth.gif",
+      "creator": "NASA",
+      "license": "public domain",
+      "start_seconds": 0.0,
+      "sha256": "87a9fb3655e11a937448b199430f9aac1a8cd0d20eee40d944211ba44f56f2f3"
+    },
+    {
       "name": "woodland-clearing",
       "kind": "natural-image",
-      "path": "data/natural_manifold/program-2min/segment-01-woodland-clearing.mp4",
+      "path": "data/natural_manifold/program-2min/segment-03-woodland-clearing.mp4",
       "page": "https://www.pexels.com/video/walking-into-the-woods-8381986/",
       "creator": "I Am Sorin",
       "license": "Pexels license",
       "start_seconds": 0.0,
-      "sha256": "040fde7bd235a23caafd9e5e82692d441ac0a712238258b91c1144e5fa4bef7c"
+      "sha256": "b26397278a7bce88a88e642db5e0e0e8f0d4d3aaf0472fa23e517007324bcc13"
     },
     {
-      "name": "woodland-canopy",
+      "name": "ocean-surface",
       "kind": "natural-image",
-      "path": "data/natural_manifold/program-2min/segment-02-woodland-canopy.mp4",
-      "page": "https://www.pexels.com/video/walking-into-the-woods-8381986/",
-      "creator": "I Am Sorin",
-      "license": "Pexels license",
-      "start_seconds": 0.0,
-      "sha256": "ca11f2821af3297814be54e1dc59111c992cd6a69a78989d4b75fdc7ad70b584"
-    },
-    {
-      "name": "woodland-path",
-      "kind": "natural-image",
-      "path": "data/natural_manifold/program-2min/segment-03-woodland-path.mp4",
-      "page": "https://www.pexels.com/video/walking-into-the-woods-8381986/",
-      "creator": "I Am Sorin",
-      "license": "Pexels license",
-      "start_seconds": 0.0,
-      "sha256": "5d978d8adf6cdaf4ab19c7e99f6b5ccca706a39284c8b838d36675422b40009a"
-    },
-    {
-      "name": "ocean-waves",
-      "kind": "natural-image",
-      "path": "data/natural_manifold/program-2min/segment-04-ocean-waves.mp4",
+      "path": "data/natural_manifold/program-2min/segment-04-ocean-surface.mp4",
       "page": "https://www.pexels.com/video/ocean-waves-19093263/",
       "creator": "Atlantic Ambience",
       "license": "Pexels license",
       "start_seconds": 0.0,
-      "sha256": "f0b50990a536aba9cb691aedcb6ff63171b9c1ad1f3d78f0f84a6cc5f926b577"
+      "sha256": "a0d687d916568f35d1170f0a7118a2087e44ecacf99ce9d5d9aa68db80f02447"
     },
     {
-      "name": "city-street",
+      "name": "voyager-solar-spectrum",
+      "kind": "voyager-record",
+      "path": "data/natural_manifold/program-2min/segment-05-voyager-solar-spectrum.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_8_spectra.gif",
+      "creator": "National Astronomy and Ionosphere Center",
+      "license": "public domain",
+      "start_seconds": 0.0,
+      "sha256": "1fde0e3b9d6de690f63cf98d8c71a8dc214fba042e8e8095a7dd1b1f21e3eb27"
+    },
+    {
+      "name": "voyager-mercury",
+      "kind": "voyager-record",
+      "path": "data/natural_manifold/program-2min/segment-06-voyager-mercury.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_9_mercury.gif",
+      "creator": "NASA",
+      "license": "public domain",
+      "start_seconds": 0.0,
+      "sha256": "d0f14ec71082ba8df6ac7ed02fd6820f206e4c0cbe55055e5c4eec62b66711cb"
+    },
+    {
+      "name": "voyager-mars",
+      "kind": "voyager-record",
+      "path": "data/natural_manifold/program-2min/segment-07-voyager-mars.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_10_mars.gif",
+      "creator": "NASA",
+      "license": "public domain",
+      "start_seconds": 0.0,
+      "sha256": "5d34ebedf6dc333c537d37ded97fac6018b7132a37573359dd391eddd9012a12"
+    },
+    {
+      "name": "woodland-canopy",
       "kind": "natural-image",
-      "path": "data/natural_manifold/program-2min/segment-05-city-street.mp4",
+      "path": "data/natural_manifold/program-2min/segment-08-woodland-canopy.mp4",
+      "page": "https://www.pexels.com/video/walking-into-the-woods-8381986/",
+      "creator": "I Am Sorin",
+      "license": "Pexels license",
+      "start_seconds": 0.0,
+      "sha256": "8d482decc3cdc89e933298963ea12684a66c8dbb6ef4a6867bd692914b436956"
+    },
+    {
+      "name": "city-pedestrians-a",
+      "kind": "natural-image",
+      "path": "data/natural_manifold/program-2min/segment-09-city-pedestrians-a.mp4",
       "page": "https://www.pexels.com/video/people-walking-on-a-street-in-a-city-19329330/",
       "creator": "Ali Alc\u00e1ntara",
       "license": "Pexels license",
       "start_seconds": 0.0,
-      "sha256": "438d4b3214edd04fe4d2ce43a5202f855bafdecb9b8ec54ec12c2e03d89bad63"
+      "sha256": "a71e7311a7afb4e1f53955001331a0ecc57275f1b3622fc7e7a7f61348586e5e"
     },
     {
-      "name": "apple-on-table",
+      "name": "ocean-waves",
       "kind": "natural-image",
-      "path": "data/natural_manifold/program-2min/segment-06-apple-on-table.mp4",
-      "page": "https://commons.wikimedia.org/wiki/File:Apple_on_table.jpg",
-      "creator": "Kim Siever",
-      "license": "public-domain",
+      "path": "data/natural_manifold/program-2min/segment-10-ocean-waves.mp4",
+      "page": "https://www.pexels.com/video/ocean-waves-19093263/",
+      "creator": "Atlantic Ambience",
+      "license": "Pexels license",
       "start_seconds": 0.0,
-      "sha256": "f9dfef13e3e75fe89ab02990ae5ace4e716e4cb9012aa70ec765331fd226750c"
+      "sha256": "3a314aa73c5294cef2471c4a589dd8b9c02892e09ddeb858fb343e8465d500fc"
     },
     {
-      "name": "three-colors",
-      "kind": "static-colors",
-      "path": "data/natural_manifold/program-2min/segment-07-three-colors.mp4",
-      "page": "generated by scripts/build_neural_film_sources.py",
-      "creator": "Axym Labs",
-      "license": "generated",
+      "name": "voyager-jupiter",
+      "kind": "voyager-record",
+      "path": "data/natural_manifold/program-2min/segment-11-voyager-jupiter.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_11_jupiter.gif",
+      "creator": "NASA",
+      "license": "public domain",
       "start_seconds": 0.0,
-      "sha256": "b579fb9143553778c99c5da3b5b1f8033c1ea947215d008c02f46e1c75758bf5"
+      "sha256": "70130920456b7937e9de839c0c62e9493c7060b532b589345d03f12e93dac197"
     },
     {
-      "name": "random-noise",
-      "kind": "random-noise",
-      "path": "data/natural_manifold/program-2min/segment-08-random-noise.mp4",
-      "page": "generated by scripts/build_neural_film_sources.py",
-      "creator": "Axym Labs",
-      "license": "generated",
+      "name": "voyager-earth-egypt",
+      "kind": "voyager-record",
+      "path": "data/natural_manifold/program-2min/segment-12-voyager-earth-egypt.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_13_earth.gif",
+      "creator": "NASA",
+      "license": "public domain",
       "start_seconds": 0.0,
-      "sha256": "8f48b63bfc8d18698a004f15b5c87e7db07db2772fb638af7c327a8c73501669"
+      "sha256": "5e5411e169a65da034a70165bc403d01a7f815148698e96200d8bce09b9ec52f"
+    },
+    {
+      "name": "voyager-supermarket",
+      "kind": "voyager-record",
+      "path": "data/natural_manifold/program-2min/segment-13-voyager-supermarket.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_77_supermarket.gif",
+      "creator": "NASA Ames Research Center",
+      "license": "public domain",
+      "start_seconds": 0.0,
+      "sha256": "34f4113ae0cd39b06668ca7f0a9af08a14f5dc234aa25173b6ab24bd3e6a331a"
+    },
+    {
+      "name": "woodland-path",
+      "kind": "natural-image",
+      "path": "data/natural_manifold/program-2min/segment-14-woodland-path.mp4",
+      "page": "https://www.pexels.com/video/walking-into-the-woods-8381986/",
+      "creator": "I Am Sorin",
+      "license": "Pexels license",
+      "start_seconds": 0.0,
+      "sha256": "8cd95b2fffa61124c79d956b7d6a60d21088b6684192b9332abb73dd546a6786"
+    },
+    {
+      "name": "city-pedestrians-b",
+      "kind": "natural-image",
+      "path": "data/natural_manifold/program-2min/segment-15-city-pedestrians-b.mp4",
+      "page": "https://www.pexels.com/video/people-walking-on-a-street-in-a-city-19329330/",
+      "creator": "Ali Alc\u00e1ntara",
+      "license": "Pexels license",
+      "start_seconds": 0.0,
+      "sha256": "fd3f0f5019f13666ebb95e1581c5b241baf8ac97fc5697ed57e955ec44d43517"
+    },
+    {
+      "name": "ocean-horizon",
+      "kind": "natural-image",
+      "path": "data/natural_manifold/program-2min/segment-16-ocean-horizon.mp4",
+      "page": "https://www.pexels.com/video/ocean-waves-19093263/",
+      "creator": "Atlantic Ambience",
+      "license": "Pexels license",
+      "start_seconds": 0.0,
+      "sha256": "4c997d8f0a81a12cb0c67666c75b5142f1d269e24b2c6287976a86dbd7f87a9c"
+    },
+    {
+      "name": "voyager-eating-and-drinking",
+      "kind": "voyager-record",
+      "path": "data/natural_manifold/program-2min/segment-17-voyager-eating-and-drinking.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_82_feeding.gif",
+      "creator": "National Astronomy and Ionosphere Center",
+      "license": "public domain",
+      "start_seconds": 0.0,
+      "sha256": "d5d2362d666ee2fd632c542f820913e04186e296d870ac4ec255914e69ad7711"
+    },
+    {
+      "name": "voyager-xray-hand",
+      "kind": "voyager-record",
+      "path": "data/natural_manifold/program-2min/segment-18-voyager-xray-hand.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_99_xray.gif",
+      "creator": "National Astronomy and Ionosphere Center",
+      "license": "public domain",
+      "start_seconds": 0.0,
+      "sha256": "0e1871155826222cf021b22ad3add38ed15030a862db2b4f27e17ffa553de136"
+    },
+    {
+      "name": "voyager-modern-highway",
+      "kind": "voyager-record",
+      "path": "data/natural_manifold/program-2min/segment-19-voyager-modern-highway.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_103_highway.gif",
+      "creator": "National Astronomy and Ionosphere Center",
+      "license": "public domain",
+      "start_seconds": 0.0,
+      "sha256": "7139473d6cd56b42e8dde50b09017b3cab1ea36fc1921d89bc1035b3ca0b248a"
+    },
+    {
+      "name": "woodland-grove",
+      "kind": "natural-image",
+      "path": "data/natural_manifold/program-2min/segment-20-woodland-grove.mp4",
+      "page": "https://www.pexels.com/video/walking-into-the-woods-8381986/",
+      "creator": "I Am Sorin",
+      "license": "Pexels license",
+      "start_seconds": 0.0,
+      "sha256": "0e5b9e84a45bdd2da9eef9397fbdb16d08e59fff37a89854a31e5f535e14fa3b"
+    },
+    {
+      "name": "woodland-trees",
+      "kind": "natural-image",
+      "path": "data/natural_manifold/program-2min/segment-21-woodland-trees.mp4",
+      "page": "https://www.pexels.com/video/walking-into-the-woods-8381986/",
+      "creator": "I Am Sorin",
+      "license": "Pexels license",
+      "start_seconds": 0.0,
+      "sha256": "b6de30e88372ccef0f1a0662e9f709ba96fb8d003a68b4196cee7555c7aa721b"
+    },
+    {
+      "name": "woodland-trail",
+      "kind": "natural-image",
+      "path": "data/natural_manifold/program-2min/segment-22-woodland-trail.mp4",
+      "page": "https://www.pexels.com/video/walking-into-the-woods-8381986/",
+      "creator": "I Am Sorin",
+      "license": "Pexels license",
+      "start_seconds": 0.0,
+      "sha256": "efe81e076748102b7c1435e814fa6946304bfc5dd071c3e6c6a7c64ea31a5c8c"
+    },
+    {
+      "name": "voyager-arecibo",
+      "kind": "voyager-record",
+      "path": "data/natural_manifold/program-2min/segment-23-voyager-arecibo.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_110_arecibo.gif",
+      "creator": "National Astronomy and Ionosphere Center",
+      "license": "public domain",
+      "start_seconds": 0.0,
+      "sha256": "7886441a01dc1161ab46db1bd151f4106d16779f3c541a51883d7a3c8899ce8e"
+    },
+    {
+      "name": "voyager-astronaut",
+      "kind": "voyager-record",
+      "path": "data/natural_manifold/program-2min/segment-24-voyager-astronaut.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Voyager_golden_record_112_astronaut.gif",
+      "creator": "NASA",
+      "license": "public domain",
+      "start_seconds": 0.0,
+      "sha256": "d261002a38352f013cfb00b693e86b85c119b4940fc1ecfe36394af5ff124370"
     }
   ],
   "classification": {
     "sample_seconds": 0.025,
     "train_seconds": [
       1.0,
-      6.0
+      2.5
     ],
     "test_seconds": [
-      7.0,
-      12.0
+      3.0,
+      4.5
     ],
     "logistic_C": 1.0,
     "minimum_stimulus_balanced_accuracy": 0.75,
@@ -126,16 +286,31 @@
     "trustworthiness_neighbors": 15
   },
   "dynamics": {
-    "transition_approach_seconds": [13.0, 15.0],
-    "post_transition_seconds": [1.0, 3.0],
-    "reference_orbit_seconds": [10.0, 12.0],
-    "oscillation_seconds": [4.0, 12.0],
-    "minimum_orbit_approach_ratio": 1.5,
+    "transition_approach_seconds": [
+      5.0,
+      5.8
+    ],
+    "post_transition_seconds": [
+      1.0,
+      1.8
+    ],
+    "reference_orbit_seconds": [
+      3.5,
+      4.5
+    ],
+    "oscillation_seconds": [
+      1.8,
+      4.8
+    ],
+    "minimum_orbit_approach_ratio": 1.25,
     "maximum_peak_frequency_drift_hz": 0.5,
     "minimum_peak_power_fraction": 0.35,
-    "amplitude_ratio": [0.9, 1.1]
+    "amplitude_ratio": [
+      0.75,
+      1.35
+    ]
   },
   "display_fps": 30,
   "program_manifest": "data/natural_manifold/program-2min/program-manifest.json",
-  "program_manifest_sha256": "ae522807eef6830d099c5d1ef813c165a12b7d1ced4f3738fc4c5c294f74c054"
+  "program_manifest_sha256": "65d41dbec1e97fdcd152aa32bacd60145008768b0071033bbf5b92798e2d62c0"
 }
