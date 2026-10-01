@@ -185,11 +185,16 @@ def _coordinates(x, y):
 
 def _scatter_by_groups(x, y, groups, *, size=0.55, opacity=0.82):
     pieces = []
-    unique = list(dict.fromkeys(np.asarray(groups).tolist()))
-    for index, group in enumerate(unique):
-        mask = np.asarray(groups) == group
+    groups = np.asarray(groups)
+    unique = list(dict.fromkeys(groups.tolist()))
+    palette_slot = {
+        group: index % len(PALETTE) for index, group in enumerate(unique)
+    }
+    color_index = np.asarray([palette_slot[group] for group in groups])
+    for index in sorted(set(color_index.tolist())):
+        mask = color_index == index
         pieces.append(
-            rf"\addplot[only marks,mark=*,mark size={size}pt,color=C{index % len(PALETTE)},draw opacity={opacity},fill opacity={opacity}] coordinates {{{_coordinates(np.asarray(x)[mask], np.asarray(y)[mask])}}};"
+            rf"\addplot[only marks,mark=*,mark size={size}pt,color=C{index},draw opacity={opacity},fill opacity={opacity}] coordinates {{{_coordinates(np.asarray(x)[mask], np.asarray(y)[mask])}}};"
         )
     return "\n".join(pieces)
 
@@ -298,7 +303,7 @@ def _render_sampling(manifest, output):
 def _render_raw_umaps(manifest, recording, analysis, output):
     values = analysis["activation_umap_2d"]
     image_index = recording["image_index"].astype(int)
-    selected = _sample_indices(np.ones(len(values), dtype=bool), 1400, 41)
+    selected = _sample_indices(np.ones(len(values), dtype=bool), 2000, 41)
     values = values[selected]
     image_index = image_index[selected]
     sources = np.asarray([manifest["rows"][index]["source"] for index in image_index])
@@ -323,7 +328,7 @@ def _render_raw_umaps(manifest, recording, analysis, output):
             rf"\fill[white,rounded corners=12pt] ({left - 26},27) rectangle ({left + 365},438);"
         )
         plots = _scatter_by_groups(
-            values[:, 0], values[:, 1], groups, size=1.05, opacity=0.88
+            values[:, 0], values[:, 1], groups, size=1.0, opacity=0.86
         )
         options = (
             f"xmin={xlim[0]},xmax={xlim[1]},ymin={ylim[0]},ymax={ylim[1]},"
@@ -508,12 +513,12 @@ def _render_subspace_distance(analysis, metrics, output):
 def _render_subspace_2d(recording, analysis, output):
     values = analysis["display_learned_umap_2d"]
     direction = recording["direction_degrees"].astype(int)
-    selected = _sample_indices(np.ones(len(values), dtype=bool), 3000, 42)
+    selected = _sample_indices(np.ones(len(values), dtype=bool), 6000, 42)
     values = values[selected]
     direction = direction[selected]
     xlim, ylim = _bounds(values[:, 0]), _bounds(values[:, 1])
     plots = _scatter_by_groups(
-        values[:, 0], values[:, 1], direction, size=1.05, opacity=0.92
+        values[:, 0], values[:, 1], direction, size=0.9, opacity=0.88
     )
     body = "\\fill[white,rounded corners=10pt] (0,0) rectangle (316,273);" + _axis(
         18,
@@ -575,7 +580,7 @@ def _render_statistics(analysis, output):
 
 def _render_3d(direction, values, output, filename, width, height):
     direction = np.asarray(direction)
-    selected = _sample_indices(np.ones(len(values), dtype=bool), 3000, 44)
+    selected = _sample_indices(np.ones(len(values), dtype=bool), 6000, 44)
     values = values[selected]
     direction = direction[selected]
     plots = []
@@ -585,7 +590,7 @@ def _render_3d(direction, values, output, filename, width, height):
             f"({_number(x)},{_number(y)},{_number(z)})" for x, y, z in values[mask]
         )
         plots.append(
-            rf"\addplot3[only marks,mark=*,mark size=.85pt,color=C{index},draw opacity=.92,fill opacity=.92] coordinates {{{coords}}};"
+            rf"\addplot3[only marks,mark=*,mark size=.78pt,color=C{index},draw opacity=.88,fill opacity=.88] coordinates {{{coords}}};"
         )
     body = "\\fill[white] (0,0) rectangle (%d,%d);" % (width, height) + _axis(
         45,
@@ -686,7 +691,7 @@ def _render_retinotopic(manifest, recording, analysis, output):
                 rf"\draw[-{{Stealth[length=11pt,width=8pt]}},white,line width=2.7pt] ({sx},{sy}) -- ({_number(ex)},{_number(ey)});"
             )
     values = analysis["display_learned_umap_3d"]
-    selected_points = _sample_indices(np.ones(len(values), dtype=bool), 2400, 45)
+    selected_points = _sample_indices(np.ones(len(values), dtype=bool), 5000, 45)
     values = values[selected_points]
     analysis_direction = analysis_direction[selected_points]
     plots = []
@@ -795,8 +800,9 @@ def render_all(config):
             "learned_subspace_umap": metrics["display_umap_selection"][
                 "learned_subspace"
             ],
-            "raw_three_panel_render_sample": 1400,
-            "single_manifold_render_sample": 3000,
+            "raw_three_panel_render_sample": 2000,
+            "single_manifold_render_sample": 6000,
+            "retinotopic_manifold_render_sample": 5000,
             "subsampling_role": "deterministic display-only point thinning after UMAP; all 12,000 samples are used to fit the embeddings",
         },
     }

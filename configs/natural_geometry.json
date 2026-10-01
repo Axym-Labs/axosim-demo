@@ -68,11 +68,11 @@
       "selection": "highest joint trustworthiness and canvas occupancy among six display candidates"
     },
     "learned_subspace_umap": {
-      "n_neighbors": 10,
-      "min_dist": 0.08,
+      "n_neighbors": 60,
+      "min_dist": 0.02,
       "metric": "cosine",
-      "init": "random",
-      "selection": "highest trustworthiness and lowest circular-neighbor error among six display candidates"
+      "init": "spectral",
+      "selection": "coherent circular topology with high local trustworthiness in an eight-setting display sweep"
     }
   },
   "analysis_image_ids": {
