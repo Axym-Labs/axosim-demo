@@ -1,5 +1,5 @@
 {
-  "scope": "Frozen 3D neuron manifold under twelve existing naturalistic images and twelve Voyager Golden Record images",
+  "scope": "Frozen 3D neuron manifold under 24 unique images: twelve naturalistic scenes and twelve Voyager Golden Record images",
   "vision_config": "configs/flyvis_moving_edge.json",
   "scored_summary": "data/vision_axosim/summary.json",
   "source_dt_seconds": 0.005,
@@ -89,17 +89,17 @@
       "creator": "NASA",
       "license": "public domain",
       "start_seconds": 0.0,
-      "sha256": "5d34ebedf6dc333c537d37ded97fac6018b7132a37573359dd391eddd9012a12"
+      "sha256": "0bc399ab839a86b2cd0c217d2f2d2481381beae2dc5cccd1bbf41fb32400df92"
     },
     {
-      "name": "woodland-canopy",
+      "name": "yosemite-valley",
       "kind": "natural-image",
-      "path": "data/natural_manifold/program-2min/segment-08-woodland-canopy.mp4",
-      "page": "https://www.pexels.com/video/walking-into-the-woods-8381986/",
-      "creator": "I Am Sorin",
-      "license": "Pexels license",
+      "path": "data/natural_manifold/program-2min/segment-08-yosemite-valley.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Yosemite_valley.jpg",
+      "creator": "Jon Sullivan",
+      "license": "public domain",
       "start_seconds": 0.0,
-      "sha256": "8d482decc3cdc89e933298963ea12684a66c8dbb6ef4a6867bd692914b436956"
+      "sha256": "52fee7f8875466dae8dd82edb327d64d031de9ce5d9649e2d5fcfded7e82a28b"
     },
     {
       "name": "city-pedestrians-a",
@@ -109,17 +109,17 @@
       "creator": "Ali Alc\u00e1ntara",
       "license": "Pexels license",
       "start_seconds": 0.0,
-      "sha256": "a71e7311a7afb4e1f53955001331a0ecc57275f1b3622fc7e7a7f61348586e5e"
+      "sha256": "ff97bb54ad4c9b7127715ecf9c277c35e1dcdcb60a23eca8d07a4b079ebbfcef"
     },
     {
-      "name": "ocean-waves",
+      "name": "sand-dunes",
       "kind": "natural-image",
-      "path": "data/natural_manifold/program-2min/segment-10-ocean-waves.mp4",
-      "page": "https://www.pexels.com/video/ocean-waves-19093263/",
-      "creator": "Atlantic Ambience",
-      "license": "Pexels license",
+      "path": "data/natural_manifold/program-2min/segment-10-sand-dunes.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Sand_dunes_desert.jpg",
+      "creator": "Jon Sullivan",
+      "license": "public domain",
       "start_seconds": 0.0,
-      "sha256": "3a314aa73c5294cef2471c4a589dd8b9c02892e09ddeb858fb343e8465d500fc"
+      "sha256": "830026c60f1a5856238426ae603b8461c45b008f51211a3baf0da46bb2e6145e"
     },
     {
       "name": "voyager-jupiter",
@@ -149,37 +149,37 @@
       "creator": "NASA Ames Research Center",
       "license": "public domain",
       "start_seconds": 0.0,
-      "sha256": "34f4113ae0cd39b06668ca7f0a9af08a14f5dc234aa25173b6ab24bd3e6a331a"
+      "sha256": "353ab764c6db3c57ca206121e9f0cfd001445a7f1c60d2e6955aa8d6dffa0658"
     },
     {
-      "name": "woodland-path",
+      "name": "waterfall",
       "kind": "natural-image",
-      "path": "data/natural_manifold/program-2min/segment-14-woodland-path.mp4",
-      "page": "https://www.pexels.com/video/walking-into-the-woods-8381986/",
-      "creator": "I Am Sorin",
-      "license": "Pexels license",
+      "path": "data/natural_manifold/program-2min/segment-14-waterfall.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Waterfall_%281%29.jpg",
+      "creator": "Jon Sullivan",
+      "license": "public domain",
       "start_seconds": 0.0,
-      "sha256": "8cd95b2fffa61124c79d956b7d6a60d21088b6684192b9332abb73dd546a6786"
+      "sha256": "5f103beffcd88124252611593112b0235bba8b15fd7b6463dba3d59e02ec74dc"
     },
     {
-      "name": "city-pedestrians-b",
+      "name": "beach-coast",
       "kind": "natural-image",
-      "path": "data/natural_manifold/program-2min/segment-15-city-pedestrians-b.mp4",
-      "page": "https://www.pexels.com/video/people-walking-on-a-street-in-a-city-19329330/",
-      "creator": "Ali Alc\u00e1ntara",
-      "license": "Pexels license",
+      "path": "data/natural_manifold/program-2min/segment-15-beach-coast.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Beach_coast_ocean_landscape.jpg",
+      "creator": "Jon Sullivan",
+      "license": "public domain",
       "start_seconds": 0.0,
-      "sha256": "fd3f0f5019f13666ebb95e1581c5b241baf8ac97fc5697ed57e955ec44d43517"
+      "sha256": "717a43fdcf8f56e5181143c47dc4d7b30938e90b5418991983444f543e832c81"
     },
     {
-      "name": "ocean-horizon",
+      "name": "grand-canyon",
       "kind": "natural-image",
-      "path": "data/natural_manifold/program-2min/segment-16-ocean-horizon.mp4",
-      "page": "https://www.pexels.com/video/ocean-waves-19093263/",
-      "creator": "Atlantic Ambience",
-      "license": "Pexels license",
+      "path": "data/natural_manifold/program-2min/segment-16-grand-canyon.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Grand_canyons_Arizona_desert.jpg",
+      "creator": "Jon Sullivan",
+      "license": "public domain",
       "start_seconds": 0.0,
-      "sha256": "4c997d8f0a81a12cb0c67666c75b5142f1d269e24b2c6287976a86dbd7f87a9c"
+      "sha256": "311aefbaf354acfbd450239ce1db427232a9113556e6a8c0bef59c5a8e106452"
     },
     {
       "name": "voyager-eating-and-drinking",
@@ -209,37 +209,37 @@
       "creator": "National Astronomy and Ionosphere Center",
       "license": "public domain",
       "start_seconds": 0.0,
-      "sha256": "7139473d6cd56b42e8dde50b09017b3cab1ea36fc1921d89bc1035b3ca0b248a"
+      "sha256": "4491bea865e893b6f26fb54d83e227e08ba8ccc7fb2fe8919b011d68c4893c7d"
     },
     {
-      "name": "woodland-grove",
+      "name": "sedona-mountains",
       "kind": "natural-image",
-      "path": "data/natural_manifold/program-2min/segment-20-woodland-grove.mp4",
-      "page": "https://www.pexels.com/video/walking-into-the-woods-8381986/",
-      "creator": "I Am Sorin",
-      "license": "Pexels license",
+      "path": "data/natural_manifold/program-2min/segment-20-sedona-mountains.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Sedona_mountains.jpg",
+      "creator": "Jon Sullivan",
+      "license": "public domain",
       "start_seconds": 0.0,
-      "sha256": "0e5b9e84a45bdd2da9eef9397fbdb16d08e59fff37a89854a31e5f535e14fa3b"
+      "sha256": "172a3db132c0d8b91c1aee9f1b18c4825134a8792270340cb376151fa804d370"
     },
     {
-      "name": "woodland-trees",
+      "name": "bitterroot-fields",
       "kind": "natural-image",
-      "path": "data/natural_manifold/program-2min/segment-21-woodland-trees.mp4",
-      "page": "https://www.pexels.com/video/walking-into-the-woods-8381986/",
-      "creator": "I Am Sorin",
-      "license": "Pexels license",
+      "path": "data/natural_manifold/program-2min/segment-21-bitterroot-fields.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Bitterroot_mountains_fields.jpg",
+      "creator": "Jon Sullivan",
+      "license": "public domain",
       "start_seconds": 0.0,
-      "sha256": "b6de30e88372ccef0f1a0662e9f709ba96fb8d003a68b4196cee7555c7aa721b"
+      "sha256": "206f4c5320d92db6ab9c4562130890cafee8fefd86cb37f79199283410ed3202"
     },
     {
-      "name": "woodland-trail",
+      "name": "imperial-pier",
       "kind": "natural-image",
-      "path": "data/natural_manifold/program-2min/segment-22-woodland-trail.mp4",
-      "page": "https://www.pexels.com/video/walking-into-the-woods-8381986/",
-      "creator": "I Am Sorin",
-      "license": "Pexels license",
+      "path": "data/natural_manifold/program-2min/segment-22-imperial-pier.mp4",
+      "page": "https://commons.wikimedia.org/wiki/File:Pier_at_imperial_beach.jpg",
+      "creator": "Jon Sullivan",
+      "license": "public domain",
       "start_seconds": 0.0,
-      "sha256": "efe81e076748102b7c1435e814fa6946304bfc5dd071c3e6c6a7c64ea31a5c8c"
+      "sha256": "8278ef2cba1069c5b13c4d7a5aff04ec12d3c52d7798a749bae2c2acf6867378"
     },
     {
       "name": "voyager-arecibo",
@@ -259,7 +259,7 @@
       "creator": "NASA",
       "license": "public domain",
       "start_seconds": 0.0,
-      "sha256": "d261002a38352f013cfb00b693e86b85c119b4940fc1ecfe36394af5ff124370"
+      "sha256": "b4d0662e47623e419e40f7d08dbf22c6fceaac72b5ae857dcca88469dd8d0476"
     }
   ],
   "classification": {
@@ -312,5 +312,5 @@
   },
   "display_fps": 30,
   "program_manifest": "data/natural_manifold/program-2min/program-manifest.json",
-  "program_manifest_sha256": "65d41dbec1e97fdcd152aa32bacd60145008768b0071033bbf5b92798e2d62c0"
+  "program_manifest_sha256": "65b43c3032201751672fa3105abe697e39054070a821430a912e1c2809193302"
 }

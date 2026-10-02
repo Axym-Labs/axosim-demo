@@ -422,18 +422,27 @@ def run_experiment(
     )
     if not np.isfinite(dynamic).all() or not np.isfinite(uniform).all():
         raise RuntimeError("Nonfinite AxoSim manifold recording")
-    dynamic_score = _classify_scene(dynamic, time, contract)
-    uniform_score = _classify_scene(uniform, time, contract)
-    state_embedding, state_time, pca_values, embedding_metrics = _embed_states(
-        dynamic, time, contract
-    )
-    dynamics = _analyze_settling_and_oscillation(
-        dynamic,
-        time,
-        pca_values,
-        state_time,
-        contract,
-    )
+    # Small analysis matrices otherwise oversubscribe the workstation's BLAS
+    # threads. This limit changes CPU scheduling, not AxoSim or its inputs.
+    from threadpoolctl import threadpool_limits
+
+    with threadpool_limits(limits=4):
+        print("analysis: stimulus temporal-block classification", flush=True)
+        dynamic_score = _classify_scene(dynamic, time, contract)
+        print("analysis: uniform-control classification", flush=True)
+        uniform_score = _classify_scene(uniform, time, contract)
+        print("analysis: population-state PCA and UMAP", flush=True)
+        state_embedding, state_time, pca_values, embedding_metrics = _embed_states(
+            dynamic, time, contract
+        )
+        print("analysis: settling and oscillation", flush=True)
+        dynamics = _analyze_settling_and_oscillation(
+            dynamic,
+            time,
+            pca_values,
+            state_time,
+            contract,
+        )
     advantage = dynamic_score["balanced_accuracy"] - uniform_score["balanced_accuracy"]
     gate = (
         dynamic_score["balanced_accuracy"]
@@ -525,6 +534,7 @@ def run_experiment(
             "dynamic_shards": len(shards),
             "raw_dynamic_total_bytes": recording_manifest["raw_dynamic_total_bytes"],
         },
+        "analysis_cpu_threads": 4,
         "runtime_wall_seconds": time_module.monotonic() - started,
     }
     report["recording_sha256"] = _sha256(output / "manifold-recording.npz")
@@ -647,6 +657,10 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
     report = json.loads(Path(summary).read_text())
     if report["status"] != "complete":
         raise ValueError("Manifold experiment is incomplete")
+    if _sha256(config) != report["config_sha256"]:
+        raise ValueError("The video stimuli must match the AxoSim inference config")
+    if _sha256(recording) != report["recording_sha256"]:
+        raise ValueError("The video recording must match the AxoSim inference report")
     with np.load(recording) as data:
         state_embedding = data["state_embedding"].astype(np.float32)
         state_time = data["state_time"].astype(np.float32)

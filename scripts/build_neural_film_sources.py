@@ -149,19 +149,109 @@ VOYAGER_SOURCES = (
     },
 )
 
+# Use each original footage source once; all other slots have distinct photos.
 NATURAL_STILLS = (
     ("woodland-clearing", "woodland", 3.0),
     ("ocean-surface", "ocean", 2.0),
-    ("woodland-canopy", "woodland", 10.0),
     ("city-pedestrians-a", "city", 1.0),
-    ("ocean-waves", "ocean", 7.0),
-    ("woodland-path", "woodland", 18.0),
-    ("city-pedestrians-b", "city", 3.5),
-    ("ocean-horizon", "ocean", 12.0),
-    ("woodland-grove", "woodland", 28.0),
-    ("woodland-trees", "woodland", 38.0),
-    ("woodland-trail", "woodland", 48.0),
 )
+LANDSCAPE_SOURCES = (
+    {
+        "file": "Yosemite_valley.jpg",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/7/77/Yosemite_valley.jpg",
+        "page": "https://commons.wikimedia.org/wiki/File:Yosemite_valley.jpg",
+        "sha256": "96e1589b2a311ece794cdfc822100d8ab0f157cb258a41455b0ed480a98312a7",
+        "attribution": "Jon Sullivan",
+        "license": "public domain",
+    },
+    {
+        "file": "Waterfall_(1).jpg",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/8/8a/Waterfall_%281%29.jpg",
+        "page": "https://commons.wikimedia.org/wiki/File:Waterfall_%281%29.jpg",
+        "sha256": "e7bfb796b2b698cb16c5d8333fb6097037bc1c346e360499c728371ee65897df",
+        "attribution": "Jon Sullivan",
+        "license": "public domain",
+    },
+    {
+        "file": "Sedona_mountains.jpg",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/8/8a/Sedona_mountains.jpg",
+        "page": "https://commons.wikimedia.org/wiki/File:Sedona_mountains.jpg",
+        "sha256": "a06ff9e9984283287bfe09298c6c2be815a942ff330dcbee4b58aeca903f24fa",
+        "attribution": "Jon Sullivan",
+        "license": "public domain",
+    },
+    {
+        "file": "Sand_dunes_desert.jpg",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/0/07/Sand_dunes_desert.jpg",
+        "page": "https://commons.wikimedia.org/wiki/File:Sand_dunes_desert.jpg",
+        "sha256": "840538d3bf4a7bd3409e8d81baa7d080ebb1ee1d9bdcadeff61cdfbcd1f089f1",
+        "attribution": "Jon Sullivan",
+        "license": "public domain",
+    },
+    {
+        "file": "Beach_coast_ocean_landscape.jpg",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/e/ed/Beach_coast_ocean_landscape.jpg",
+        "page": "https://commons.wikimedia.org/wiki/File:Beach_coast_ocean_landscape.jpg",
+        "sha256": "d4b933a17f94a231310cbcba82c87b06cbdb870bf4ded18527c73ae4fecc4035",
+        "attribution": "Jon Sullivan",
+        "license": "public domain",
+    },
+    {
+        "file": "Grand_canyons_Arizona_desert.jpg",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/4/4f/Grand_canyons_Arizona_desert.jpg",
+        "page": "https://commons.wikimedia.org/wiki/File:Grand_canyons_Arizona_desert.jpg",
+        "sha256": "e783da38a7966c27a2be07096ab84a4e50415a6888c09d138cf10125f88d63f0",
+        "attribution": "Jon Sullivan",
+        "license": "public domain",
+    },
+    {
+        "file": "Bitterroot_mountains_fields.jpg",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/0/08/Bitterroot_mountains_fields.jpg",
+        "page": "https://commons.wikimedia.org/wiki/File:Bitterroot_mountains_fields.jpg",
+        "sha256": "b89aa41e69525604fa2cebc7a2e3f6a9abb3358d30c0b22786b168e53bcc246b",
+        "attribution": "Jon Sullivan",
+        "license": "public domain",
+    },
+    {
+        "file": "Pier_at_imperial_beach.jpg",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Pier_at_imperial_beach.jpg",
+        "page": "https://commons.wikimedia.org/wiki/File:Pier_at_imperial_beach.jpg",
+        "sha256": "789c8f88cb7e3ae20e9813812359f7e891f88c0f30528930372aa2c98311cebb",
+        "attribution": "Jon Sullivan",
+        "license": "public domain",
+    },
+)
+NATURAL_ORDER = (
+    "woodland-clearing",
+    "ocean-surface",
+    "yosemite-valley",
+    "city-pedestrians-a",
+    "sand-dunes",
+    "waterfall",
+    "beach-coast",
+    "grand-canyon",
+    "sedona-mountains",
+    "bitterroot-fields",
+    "imperial-pier",
+)
+LANDSCAPE_NAMES = (
+    "yosemite-valley",
+    "waterfall",
+    "sedona-mountains",
+    "sand-dunes",
+    "beach-coast",
+    "grand-canyon",
+    "bitterroot-fields",
+    "imperial-pier",
+)
+
+
+def validate_unique_images(items):
+    """Reject identical fitted stimuli before inference."""
+    hashes = [hashlib.sha256(item["image"].tobytes()).hexdigest() for item in items]
+    if len(set(hashes)) != len(items):
+        raise ValueError("Every film interval must use a different source image")
+    return hashes
 
 
 def sha256(path: Path) -> str:
@@ -283,10 +373,20 @@ def main() -> None:
         for _, source, seconds in NATURAL_STILLS
     ]
     apple = fit_image(args.apple)
-    natural_items = [
-        {"name": name, "kind": "natural-image", "image": image}
+    natural_by_name = {
+        name: {"name": name, "kind": "natural-image", "image": image}
         for (name, _, _), image in zip(NATURAL_STILLS, natural_images)
-    ]
+    }
+    landscape_dir = args.source_dir / "landscapes"
+    for name, source in zip(LANDSCAPE_NAMES, LANDSCAPE_SOURCES):
+        path = landscape_dir / source["file"]
+        download_pinned(path, source["url"], source["sha256"])
+        natural_by_name[name] = {
+            "name": name,
+            "kind": "natural-image",
+            "image": fit_image(path),
+        }
+    natural_items = [natural_by_name[name] for name in NATURAL_ORDER]
     voyager_items = [
         {"name": source["name"], "kind": "voyager-record", "image": image}
         for source, image in zip(VOYAGER_SOURCES, voyager_images)
@@ -324,9 +424,11 @@ def main() -> None:
     if len(items) != 24 or [item["kind"] for item in items] != expected_kinds:
         raise RuntimeError("The frozen 24-slot stimulus order is invalid")
 
+    fitted_hashes = validate_unique_images(items)
     scenes = []
     for index, item in enumerate(items):
-        following = items[(index + 1) % len(items)]["image"]
+        # Hold the final image instead of repeating the opening apple.
+        following = items[min(index + 1, len(items) - 1)]["image"]
         path = args.output / f"segment-{index + 1:02d}-{item['name']}.mp4"
         print(f"building {path}", flush=True)
         write_segment(path, item["image"], following)
@@ -337,6 +439,7 @@ def main() -> None:
                 "path": str(path),
                 "duration_seconds": DURATION_SECONDS,
                 "sha256": sha256(path),
+                "fitted_image_sha256": fitted_hashes[index],
             }
         )
 
@@ -363,6 +466,17 @@ def main() -> None:
                 "attribution": record["creator"],
             }
         )
+    for name, source in zip(LANDSCAPE_NAMES, LANDSCAPE_SOURCES):
+        source_records.append(
+            {
+                "name": name,
+                "path": str(landscape_dir / source["file"]),
+                "sha256": source["sha256"],
+                "page": source["page"],
+                "license": source["license"],
+                "attribution": source["attribution"],
+            }
+        )
     for source in VOYAGER_SOURCES:
         source_records.append(
             {
@@ -376,6 +490,8 @@ def main() -> None:
             }
         )
 
+    if len({source["sha256"] for source in source_records}) != len(source_records):
+        raise ValueError("Source files must not be reused in the film")
     manifest = {
         "fps": FPS,
         "resolution": list(SIZE),
@@ -386,8 +502,11 @@ def main() -> None:
         "transition": {
             "seconds": TRANSITION_SECONDS,
             "method": "smoothstep RGB interpolation with symmetric Gaussian blur",
-            "placement": "final one second of every five-second image interval",
+            "placement": "final one second of the first 23 intervals; final image held",
+            "final_image_wraps_to_first": False,
         },
+        "unique_source_files": len({source["sha256"] for source in source_records}),
+        "unique_fitted_images": len(set(fitted_hashes)),
         "sources": source_records,
         "scenes": scenes,
     }

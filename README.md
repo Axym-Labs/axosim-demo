@@ -62,7 +62,7 @@ PYTHONPATH=src .venv/bin/python -m axosim_demo natural-geometry analyze --device
 PYTHONPATH=src .venv/bin/python -m axosim_demo natural-geometry render-plots
 ```
 
-The neural-state film has a separate stimulus and score contract. Place the three pinned Pexels source clips at `data/natural_manifold/sources/{woodland,ocean,city}.mp4`; the builder verifies their hashes and downloads the public-domain apple and selected public-domain Voyager Golden Record files when needed:
+The neural-state film has a separate stimulus and score contract. Place the three pinned Pexels source clips at `data/natural_manifold/sources/{woodland,ocean,city}.mp4`; the builder verifies their hashes and downloads the public-domain apple, eight distinct landscape photographs and selected public-domain Voyager Golden Record files when needed:
 
 ```bash
 PYTHONPATH=src .venv/bin/python scripts/build_neural_film_sources.py
