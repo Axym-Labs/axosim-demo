@@ -20,11 +20,11 @@ BLOCK_SECONDS = SAMPLE_SECONDS * BLOCK_SAMPLES
 
 def blocks_for(seconds):
     """Number of whole blocks covering ``seconds`` (ceil, identical in JS)."""
-    return int(math.ceil(seconds / BLOCK_SECONDS - 1e-9))
+    return math.ceil(seconds / BLOCK_SECONDS - 1e-9)
 
 
 def sample_index(seconds):
-    return int(round(seconds / SAMPLE_SECONDS))
+    return round(seconds / SAMPLE_SECONDS)
 
 
 def _cdist(a, b):
@@ -37,8 +37,8 @@ def _cdist(a, b):
 
 def crop_box(width, height):
     """Integer centre crop to 16:9."""
-    crop_width = min(width, int(round(height * 16 / 9)))
-    crop_height = min(height, int(round(width * 9 / 16)))
+    crop_width = min(width, round(height * 16 / 9))
+    crop_height = min(height, round(width * 9 / 16))
     return (width - crop_width) // 2, (height - crop_height) // 2, crop_width, crop_height
 
 
@@ -48,7 +48,7 @@ def area_weights(n_in, n_out):
     weights = np.zeros((n_out, n_in), dtype=np.float64)
     for out in range(n_out):
         start, stop = out * scale, (out + 1) * scale
-        first, last = int(math.floor(start)), int(math.ceil(stop))
+        first, last = math.floor(start), math.ceil(stop)
         for source in range(first, min(last, n_in)):
             overlap = min(stop, source + 1) - max(start, source)
             if overlap > 0:
@@ -96,7 +96,7 @@ def normalize_samples(samples, *, mean=0.5, std=0.15, clip=(0.0, 1.0)):
 def video_samples(frames, fps, seconds):
     """Linear-in-time interpolation of per-frame lattice samples at 4 ms."""
     frames = np.asarray(frames, dtype=np.float64)
-    count = int(math.ceil(seconds / SAMPLE_SECONDS - 1e-9))
+    count = math.ceil(seconds / SAMPLE_SECONDS - 1e-9)
     position = np.arange(count, dtype=np.float64) * SAMPLE_SECONDS * fps
     lower = np.minimum(np.floor(position).astype(int), len(frames) - 1)
     upper = np.minimum(lower + 1, len(frames) - 1)
@@ -311,7 +311,7 @@ def perturbation_stability(sim, image_stimulus, hidden, activity, sigma, recorde
     distance = torch.stack(distances, dim=-1)
     control, perturbed = distance[:, :1], distance[:, 1:]
     excess = (perturbed - control) / perturbed[..., :1].clamp_min(1e-12)
-    late = int(round(cfg["late_seconds"] / BLOCK_SECONDS))
+    late = round(cfg["late_seconds"] / BLOCK_SECONDS)
     per_seed = excess[..., -late:].median(dim=-1).values
     # Integrated normalized excess: equals the time constant of an exponential return.
     return_time = excess.clamp_min(0).sum(dim=-1) * BLOCK_SECONDS

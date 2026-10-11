@@ -79,7 +79,7 @@ def fold_parameters(runtime):
 def _fold_parameters(runtime):
     model = runtime.model
     cfg = model.config
-    token, state, patch = cfg.token_dim, cfg.state_dim, cfg.patch_size
+    _token, state, patch = cfg.token_dim, cfg.state_dim, cfg.patch_size
     dtype = torch.float64
     cache = runtime.adaptation_cache[0].to(dtype).cpu()
     slices = model.runtime_coefficient_slices
@@ -251,7 +251,7 @@ def export_runtime(output, *, device="cuda"):
     folded = fold_parameters(runtime)
     descriptor = {
         "nodes": int(runtime.n_nodes),
-        "edges": int(len(graph["col"])),
+        "edges": len(graph["col"]),
         "input_cells": int(runtime.input_index.numel()),
         "columns": 721,
         "record_layers": contract["record_layers"],

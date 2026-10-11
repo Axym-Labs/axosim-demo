@@ -189,7 +189,7 @@ def fit_latent(db, work, *, config=DEFAULT_CONFIG, batch=32):
         fit_image_index=np.repeat(np.asarray(chosen), cfg["fit_samples_per_image"]),
         warm_record=runner.warm_record.cpu().numpy(),
     )
-    summary = {"images": len(chosen), "states": int(len(states)), "explained_variance": explained}
+    summary = {"images": len(chosen), "states": len(states), "explained_variance": explained}
     (work / "latent-summary.json").write_text(json.dumps(summary, indent=2))
     return summary
 
@@ -243,8 +243,8 @@ def run_database(db, work, *, config=DEFAULT_CONFIG, batch=32, chunk=1024, limit
                     generator=generator,
                 )
             )
-            for key in collected:
-                collected[key].append(stats[key].detach().cpu().numpy())
+            for key, values in collected.items():
+                values.append(stats[key].detach().cpu().numpy())
         np.savez(path, ids=np.asarray([row["id"] for row in part]), **{k: np.concatenate(v) for k, v in collected.items()})
         done = first + len(part)
         rate = done / (time.monotonic() - started)
@@ -256,7 +256,7 @@ def merge_chunks(work):
     parts = [np.load(path) for path in sorted((Path(work) / "chunks").glob("*.npz"))]
     merged = {key: np.concatenate([part[key] for part in parts]) for key in parts[0].files}
     np.savez(Path(work) / "database-stats.npz", **merged)
-    return {"images": int(len(merged["ids"])), "stable_fraction": float(merged["stable_orbit"].mean())}
+    return {"images": len(merged["ids"]), "stable_fraction": float(merged["stable_orbit"].mean())}
 
 
 def main():
