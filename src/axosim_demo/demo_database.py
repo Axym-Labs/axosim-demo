@@ -349,3 +349,251 @@ def export_latent(work, output):
     (output / "latent.bin").write_bytes(b"".join(blobs))
     (output / "latent.json").write_text(json.dumps(layout))
     return layout
+
+
+# ---------------------------------------------------------------- videos, UMAPs, export
+
+
+def _pack(output, name, parts, meta=None):
+    """Write <name>.bin + <name>.json layout (little-endian)."""
+    layout, offset, blobs = {}, 0, []
+    for key, array in parts:
+        array = np.ascontiguousarray(array)
+        if array.dtype.kind == "f" and array.dtype.itemsize == 4:
+            array = array.astype("<f4")
+        layout[key] = {"offset": offset, "dtype": array.dtype.name, "shape": list(array.shape)}
+        blob = array.tobytes()
+        blobs.append(blob)
+        offset += len(blob)
+        offset += (-offset) % 4
+        blobs.append(b"\0" * ((-len(blob)) % 4))
+    if meta is not None:
+        layout["meta"] = meta
+    output = Path(output)
+    output.mkdir(parents=True, exist_ok=True)
+    (output / f"{name}.bin").write_bytes(b"".join(blobs))
+    (output / f"{name}.json").write_text(json.dumps(layout, separators=(",", ":")))
+
+
+def video_lattice(path, lattice, cfg):
+    """Raw (unnormalized) lattice luminance per decoded frame, quantized to uint16."""
+    import imageio
+
+    frames = []
+    reader = imageio.get_reader(path)
+    try:
+        fps = float(reader.get_meta_data()["fps"])
+        for rgb in reader:
+            frame = ref.frame_from_rgb(rgb, width=cfg["frame_width"], height=cfg["frame_height"])
+            frames.append(ref.lattice_sample(frame, *lattice, scale=cfg["lattice_scale"]))
+    finally:
+        reader.close()
+    raw = np.clip(np.round(np.asarray(frames) * 65535), 0, 65535).astype(np.uint16)
+    return raw, fps
+
+
+@torch.no_grad()
+def run_videos(clips, work, *, config=DEFAULT_CONFIG):
+    """Simulate each preset clip from the gray-warm state; keep block-cadence latent states."""
+    runner = Runner(config=config)
+    latent, _ = load_latent(work, runner.device)
+    cfg = runner.contract["stimulus"]
+    norm = cfg["normalization"]
+    clips = json.loads(Path(clips).read_text())
+    out = Path(work) / "videos"
+    out.mkdir(parents=True, exist_ok=True)
+    summary = []
+    for clip in clips:
+        raw, fps = video_lattice(clip["path"], runner.lattice, cfg)
+        duration = len(raw) / fps
+        samples = ref.video_samples(raw.astype(np.float64) / 65535, fps, duration)
+        samples = ref.normalize_samples(samples, mean=norm["mean"], std=norm["standard_deviation"], clip=tuple(norm["clip"]))
+        blocks = len(samples) // 4
+        hidden, activity = runner.warm_hidden.clone(), runner.warm_activity.clone()
+        states = []
+        stimulus = torch.as_tensor(samples[: blocks * 4].reshape(blocks, 1, 4, 721), device=runner.device)
+        for block in range(blocks):
+            hidden, activity, recorded = runner.sim.step(stimulus[block], hidden, activity)
+            states.append(recorded[0, -1])
+        z = latent.project(torch.stack(states)).cpu().numpy()
+        np.savez(out / f"{clip['id']}.npz", raw=raw, fps=fps, latent=z)
+        summary.append({"id": clip["id"], "frames": len(raw), "fps": fps, "blocks": blocks})
+    (out / "summary.json").write_text(json.dumps(summary, indent=2))
+    return summary
+
+
+def fit_umaps(work, *, config=DEFAULT_CONFIG, cloud_image_states=20000, video_every=2):
+    """Descriptor UMAPs (10D for retrieval, 3D for display) and the 3D state cloud."""
+    import umap
+
+    contract = json.loads(Path(config).read_text())
+    cfg = contract["latent"]
+    seed = cfg["random_seed"]
+    work = Path(work)
+    stats = np.load(work / "database-stats.npz")
+    descriptors, quant = quantize(stats["descriptor"].astype(np.float32))
+    report = {}
+    for key, name in (("descriptor_umap", "umap10"), ("display_umap", "umap3")):
+        params = cfg[key]
+        reducer = umap.UMAP(
+            n_components=params["n_components"],
+            n_neighbors=params["n_neighbors"],
+            min_dist=params["min_dist"],
+            metric=params["metric"],
+            random_state=seed,
+        )
+        embedding = reducer.fit_transform(descriptors).astype(np.float32)
+        np.save(work / f"{name}.npy", embedding)
+    np.save(work / "descriptors-dequantized.npy", descriptors)
+    np.save(work / "descriptor-quant.npy", quant)
+    report["leave_one_out_top5_overlap"] = transform_overlap(descriptors, np.load(work / "umap10.npy"), cfg["transform_neighbors"])
+
+    latent_data = np.load(work / "latent.npz")
+    rng = np.random.default_rng(seed)
+    image_states = latent_data["fit_states_latent"]
+    pick = rng.choice(len(image_states), size=min(cloud_image_states, len(image_states)), replace=False)
+    parts, labels = [image_states[pick]], [np.zeros(len(pick), dtype=np.uint8)]
+    video_ids = []
+    for index, path in enumerate(sorted((work / "videos").glob("*.npz")), start=1):
+        z = np.load(path)["latent"][::video_every]
+        parts.append(z)
+        labels.append(np.full(len(z), index, dtype=np.uint8))
+        video_ids.append(path.stem)
+    states, state_quant = quantize(np.concatenate(parts).astype(np.float32))
+    params = cfg["state_umap"]
+    coords = umap.UMAP(
+        n_components=3,
+        n_neighbors=params["n_neighbors"],
+        min_dist=params["min_dist"],
+        metric=params["metric"],
+        random_state=seed,
+    ).fit_transform(states).astype(np.float32)
+    coords -= coords.mean(axis=0)
+    coords /= np.abs(coords).max()
+    np.savez(work / "state-cloud.npz", states=states, quant=state_quant, coords=coords, labels=np.concatenate(labels), video_ids=np.asarray(video_ids))
+    report["state_cloud_points"] = len(states)
+    (work / "umap-report.json").write_text(json.dumps(report, indent=2))
+    return report
+
+
+def knn_transform(points, reference, coords, k):
+    """Inverse-distance k-NN placement (browser `knnTransform`)."""
+    points = torch.as_tensor(points, dtype=torch.float32)
+    reference = torch.as_tensor(reference, dtype=torch.float32)
+    distance = torch.cdist(points, reference, compute_mode="donot_use_mm_for_euclid_dist")
+    values, index = distance.topk(k, largest=False)
+    weight = 1.0 / values.clamp_min(1e-9)
+    weight = weight / weight.sum(dim=1, keepdim=True)
+    return (weight[..., None] * torch.as_tensor(coords)[index]).sum(dim=1).numpy()
+
+
+def transform_overlap(descriptors, umap10, k, *, samples=2000, seed=0):
+    """Leave-one-out check: does placing a held-out image by k-NN recover its UMAP neighbours?"""
+    rng = np.random.default_rng(seed)
+    held = rng.choice(len(descriptors), size=min(samples, len(descriptors)), replace=False)
+    overlaps = []
+    for index in held:
+        keep = np.ones(len(descriptors), dtype=bool)
+        keep[index] = False
+        placed = knn_transform(descriptors[index][None], descriptors[keep], umap10[keep], k)[0]
+        fitted = umap10[index]
+        others = umap10[keep]
+        top_placed = set(np.argsort(np.linalg.norm(others - placed, axis=1))[:5])
+        top_fitted = set(np.argsort(np.linalg.norm(others - fitted, axis=1))[:5])
+        overlaps.append(len(top_placed & top_fitted) / 5)
+    return float(np.mean(overlaps))
+
+
+def reference_quantiles(work):
+    """1001 quantiles of each statistic plus split-half reliability of the return time."""
+    stats = np.load(Path(work) / "database-stats.npz")
+    stable = stats["stable_orbit"].astype(bool)
+    q = np.linspace(0, 1, 1001)
+    quantiles = {
+        key: np.quantile(stats[key].astype(np.float64), q).tolist()
+        for key in ("latent_speed", "path_density_percentile")
+    }
+    for key in ("orbit_radius", "orbit_speed", "orbit_density_percentile", "return_time", "orbit_frequency_hz"):
+        quantiles[key] = np.quantile(stats[key][stable].astype(np.float64), q).tolist()
+    seeds = stats["return_time_seeds"][stable]
+    half = seeds.shape[1] // 2
+    a = np.log(np.median(seeds[:, :half], axis=1) + 1e-6)
+    b = np.log(np.median(seeds[:, half:], axis=1) + 1e-6)
+    r = float(np.corrcoef(a, b)[0, 1])
+    return {
+        "images": len(stable),
+        "stableImages": int(stable.sum()),
+        "stableFraction": float(stable.mean()),
+        "frequencyModes": {
+            f"{value:.2f}": int(count)
+            for value, count in zip(*np.unique(np.round(stats["orbit_frequency_hz"][stable], 2), return_counts=True), strict=True)
+        },
+        "reliability": {"return_time_split_half": r, "return_time_spearman_brown": 2 * r / (1 + r)},
+        "quantiles": {k: [round(v, 6) for v in vals] for k, vals in quantiles.items()},
+    }
+
+
+def export_site(work, output, *, clips=None):
+    """Bundled site assets: latent, state cloud, reference statistics, preset lattices."""
+    output = Path(output)
+    export_latent(work, output)
+    cloud = np.load(Path(work) / "state-cloud.npz")
+    states, quant = cloud["states"], cloud["quant"]
+    _pack(
+        output,
+        "state-cloud",
+        [
+            ("latent_quant", quant.astype(np.float32)),
+            ("latent_q", np.round(states / quant).clip(-127, 127).astype(np.int8)),
+            ("coords", cloud["coords"].astype(np.float32)),
+            ("labels", cloud["labels"].astype(np.uint8)),
+        ],
+        meta={"video_ids": cloud["video_ids"].tolist()},
+    )
+    (output / "reference-stats.json").write_text(json.dumps(reference_quantiles(work), separators=(",", ":")))
+    if clips is not None:
+        videos = output / "videos"
+        videos.mkdir(parents=True, exist_ok=True)
+        presets = []
+        for clip in json.loads(Path(clips).read_text()):
+            data = np.load(Path(work) / "videos" / f"{clip['id']}.npz")
+            (videos / f"{clip['id']}.lattice.bin").write_bytes(data["raw"].astype("<u2").tobytes())
+            presets.append({**{k: v for k, v in clip.items() if k != "path"}, "frames": len(data["raw"]), "fps": float(data["fps"])})
+        (videos / "presets.json").write_text(json.dumps(presets, indent=2))
+    return {"output": str(output)}
+
+
+def export_database(db, work, output, *, ids=None, image_root="images"):
+    """Retrieval database (all images, or a subset for the bundled fallback)."""
+    rows = {row["id"]: row for row in read_manifest(db)}
+    stats = np.load(Path(work) / "database-stats.npz")
+    all_ids = stats["ids"].tolist()
+    select = np.arange(len(all_ids)) if ids is None else np.asarray([all_ids.index(i) for i in ids])
+    descriptors = np.load(Path(work) / "descriptors-dequantized.npy")[select]
+    quant = np.load(Path(work) / "descriptor-quant.npy")
+    categories = sorted({row["category"] for row in rows.values()})
+    chosen = [all_ids[i] for i in select]
+    _pack(
+        output,
+        "db",
+        [
+            ("descriptor_quant", quant.astype(np.float32)),
+            ("descriptors_q", np.round(descriptors / quant).clip(-127, 127).astype(np.int8)),
+            ("umap10", np.load(Path(work) / "umap10.npy")[select].astype(np.float16)),
+            ("umap3", np.load(Path(work) / "umap3.npy")[select].astype(np.float16)),
+            ("category", np.asarray([categories.index(rows[i]["category"]) for i in chosen], dtype=np.uint8)),
+            ("stable", stats["stable_orbit"][select].astype(np.uint8)),
+        ],
+        meta={"ids": chosen, "categories": categories, "imageRoot": image_root},
+    )
+    meta_dir = Path(output) / "meta"
+    meta_dir.mkdir(parents=True, exist_ok=True)
+    shards = {}
+    for image_id in chosen:
+        row = rows[image_id]
+        shards.setdefault(image_id[:2], {})[image_id] = {
+            key: row.get(key) for key in ("title", "category", "author", "license", "license_url", "page_url", "source")
+        }
+    for shard, entries in shards.items():
+        (meta_dir / f"{shard}.json").write_text(json.dumps(entries, separators=(",", ":")))
+    return {"images": len(chosen)}
