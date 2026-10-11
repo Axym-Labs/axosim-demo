@@ -212,10 +212,12 @@ def _analyze_settling_and_oscillation(
     from sklearn.decomposition import PCA
 
     cfg = contract["dynamics"]
+    # Only constant-input scenes are scored; configs may name their own kinds.
+    scene_kinds = set(cfg.get("scene_kinds", ("natural-image", "voyager-record")))
     image_indices = [
         index
         for index, scene in enumerate(contract["scenes"])
-        if scene["kind"] in {"natural-image", "voyager-record"}
+        if scene["kind"] in scene_kinds
     ]
     state = pca_values.reshape(len(activity), len(state_time), -1)[..., :10]
     transition = (state_time >= cfg["transition_approach_seconds"][0]) & (
@@ -295,9 +297,14 @@ def _analyze_settling_and_oscillation(
         <= cfg["amplitude_ratio"][1]
         for scene in per_scene
     )
+    scope = (
+        f"{len(per_scene) - 1} cross-image transitions followed by {len(per_scene)} sustained image intervals"
+        if "scene_kinds" not in cfg
+        else f"{sum(scene['transition_to_post_transition_orbit_distance_ratio'] is not None for scene in per_scene)} transitions into, and {len(per_scene)} sustained intervals of, constant-input scenes of kind {sorted(scene_kinds)}"
+    )
     return {
         "passed": passed,
-        "scope": f"{len(per_scene) - 1} cross-image transitions followed by {len(per_scene)} sustained image intervals",
+        "scope": scope,
         "interpretation": "population states approach a late recurrent orbit across each image transition and retain a stable dominant oscillation under constant visual input",
         "claim_boundary": "descriptive evidence for a stable oscillatory trajectory; a limit-cycle attractor requires perturbation-and-return validation",
         "method": cfg,
@@ -492,7 +499,10 @@ def run_experiment(
     report = {
         "status": "complete",
         "passed": gate and dynamics["passed"],
-        "scope": "3D neuron-response manifold for frozen AxoSim visual-circuit activity under natural scenes and Voyager Golden Record images",
+        "scope": contract.get(
+            "report_scope",
+            "3D neuron-response manifold for frozen AxoSim visual-circuit activity under natural scenes and Voyager Golden Record images",
+        ),
         "claim_boundary": "visual separability and visualization; not anatomy, calibrated fly physiology, camera control, or behavior",
         "config_sha256": _sha256(config),
         "checkpoint_sha256": scored["axosim_checkpoint_sha256"],
@@ -523,7 +533,7 @@ def run_experiment(
         "embedding": {
             **contract["embedding"],
             **embedding_metrics,
-            "object": f"one point per sampled 2,884-neuron population state; {len(contract['scenes'])} fixed trajectories correspond to natural-scene and Voyager image segments",
+            "object": f"one point per sampled 2,884-neuron population state; {len(contract['scenes'])} fixed trajectories correspond to {contract.get('trajectory_description', 'natural-scene and Voyager image segments')}",
         },
         "settling_and_oscillation": dynamics,
         "temporal_execution": f"one continuous {float(contract['warmup_seconds']) + len(contract['scenes']) * (float(contract['duration_seconds']) - float(contract['warmup_seconds'])):.0f}-second AxoSim run; {len(contract['scenes'])} overlapping analysis windows retain one second of preceding transition context and contain no state reset at a visible boundary",
@@ -605,8 +615,17 @@ def _ramp(level):
 
 
 def _draw_manifold(image, projected_paths, depth_paths, active_scene, trail):
-    """Draw the fixed state manifold and a bright causal path through it."""
+    """Draw the fixed state manifold and a bright causal path through it.
+
+    ``active_scene`` is one trajectory index or a collection of indices that
+    belong to the currently displayed source.
+    """
     draw = ImageDraw.Draw(image, "RGBA")
+    active = (
+        {active_scene}
+        if isinstance(active_scene, (int, np.integer))
+        else set(active_scene)
+    )
     for scene_index, path in enumerate(projected_paths):
         valid = [
             tuple(point)
@@ -614,13 +633,13 @@ def _draw_manifold(image, projected_paths, depth_paths, active_scene, trail):
             if 650 <= point[0] < 1274 and 36 <= point[1] < 650
         ]
         if len(valid) > 1:
-            alpha = 82 if scene_index == active_scene else 38
+            alpha = 82 if scene_index in active else 38
             draw.line(valid, fill=(121, 104, 181, alpha), width=2)
         order = np.argsort(depth_paths[scene_index])
         for point_index in order[::2]:
             x, y = path[point_index]
             if 650 <= x < 1274 and 36 <= y < 650:
-                alpha = 116 if scene_index == active_scene else 58
+                alpha = 116 if scene_index in active else 58
                 draw.ellipse(
                     (x - 1.7, y - 1.7, x + 1.7, y + 1.7), fill=(177, 171, 205, alpha)
                 )
@@ -664,9 +683,13 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
     with np.load(recording) as data:
         state_embedding = data["state_embedding"].astype(np.float32)
         state_time = data["state_time"].astype(np.float32)
+    # The 180 ms default suits held images; shorter constants keep the ~3 Hz
+    # recurrent orbit visible instead of averaging it away.
+    smoothing_seconds = float(contract.get("display_smoothing_seconds", 0.18))
     state_embedding = _causal_smooth_path(
         state_embedding.reshape(-1, 3),
         dt=float(contract["embedding"]["sample_seconds"]),
+        time_constant_seconds=smoothing_seconds,
     ).reshape(state_embedding.shape)
     state_embedding = _normalize_embedding(state_embedding)
     projected_paths = []
@@ -685,8 +708,28 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     readers = [imageio.get_reader(scene["path"]) for scene in contract["scenes"]]
+    # Windows cut from one clip share a display group and are highlighted together.
+    groups = [
+        scene.get("display_group", index)
+        for index, scene in enumerate(contract["scenes"])
+    ]
+    group_members = {
+        group: [index for index, value in enumerate(groups) if value == group]
+        for group in groups
+    }
     gradient = _right_gradient()
     title_font = _font(25, weight=600)
+    # Moving footage needs a rate cap to stay web-sized; static-image configs
+    # keep the original CRF-20 encoding.
+    encoding = contract.get("encoding", {})
+    rate_cap = []
+    if "maxrate_kbps" in encoding:
+        rate_cap = [
+            "-maxrate",
+            f"{int(encoding['maxrate_kbps'])}k",
+            "-bufsize",
+            f"{2 * int(encoding['maxrate_kbps'])}k",
+        ]
     writer = imageio.get_writer(
         output / "axosim-neural-landscape.mp4",
         fps=fps,
@@ -697,7 +740,10 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
             "-preset",
             "slow",
             "-crf",
-            "20",
+            str(int(encoding.get("crf", 20))),
+            *rate_cap,
+            "-pix_fmt",
+            "yuv420p",
             "-movflags",
             "+faststart",
         ],
@@ -737,7 +783,7 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
                 background,
                 projected_paths,
                 depth_paths,
-                scene_index,
+                group_members[groups[scene_index]],
                 trail,
             )
             draw = ImageDraw.Draw(background, "RGBA")
@@ -774,7 +820,8 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
             "uniform": report["uniform_luminance_classification"],
         },
         "embedding": report["embedding"],
-        "display": "fixed-camera temporal 3D UMAP; every point is one 2,884-neuron population state from a continuous AxoSim run; persistent full trajectories; cross-boundary causal 180-ms display smoothing and causal 1.6-second current-state trail; no activity field is drawn over the source image",
+        "display": f"fixed-camera temporal 3D UMAP; every point is one 2,884-neuron population state from a continuous AxoSim run; persistent full trajectories; cross-boundary causal {smoothing_seconds * 1000:.0f}-ms display smoothing and causal 1.6-second current-state trail; no activity field is drawn over the source image",
+        "display_smoothing_seconds": smoothing_seconds,
         "activity_color": "violet-magenta-gold marks trail recency only; it never denotes cell type",
         "display_start_seconds_per_scene": display_start,
         "camera_motion": False,
@@ -792,7 +839,13 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
             "bottom_baseline_margin_pixels": 46,
         },
         "renderer": "Pillow custom perspective renderer with Inter; no Matplotlib",
-        "encoding": "H.264 High, CRF 20, yuv420p, fast-start",
+        "encoding": f"H.264 High, CRF {int(encoding.get('crf', 20))}"
+        + (
+            f", max {int(encoding['maxrate_kbps'])} kb/s"
+            if "maxrate_kbps" in encoding
+            else ""
+        )
+        + ", yuv420p, fast-start",
         "source_frame_sampling": "linear temporal interpolation at original playback speed; no segment looping or slow motion",
         "controller_or_motor_output": False,
         "future_activity_shown": False,

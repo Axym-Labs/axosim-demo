@@ -1,0 +1,498 @@
+{
+  "scope": "Frozen 3D neuron manifold under a 135-second program: three 40-second licensed clips (naturalistic coast, city at night, Earth from the ISS) followed by three held public-domain ISS photographs",
+  "report_scope": "3D neuron-response manifold for frozen AxoSim visual-circuit activity under three moving clips and three held still photographs",
+  "vision_config": "configs/flyvis_moving_edge.json",
+  "scored_summary": "data/vision_axosim/summary.json",
+  "source_dt_seconds": 0.005,
+  "duration_seconds": 6.0,
+  "warmup_seconds": 1.0,
+  "record_layers": [
+    "L1",
+    "Mi1",
+    "T4c",
+    "T5c"
+  ],
+  "retinal_normalization": {
+    "mean": 0.5,
+    "standard_deviation": 0.15,
+    "clip": [
+      0.0,
+      1.0
+    ],
+    "control": "constant mean-gray field"
+  },
+  "classification": {
+    "sample_seconds": 0.025,
+    "train_seconds": [
+      1.0,
+      2.5
+    ],
+    "test_seconds": [
+      3.0,
+      4.5
+    ],
+    "logistic_C": 1.0,
+    "minimum_stimulus_balanced_accuracy": 0.75,
+    "minimum_advantage_over_uniform": 0.1
+  },
+  "embedding": {
+    "sample_seconds": 0.025,
+    "pca_components": 50,
+    "n_neighbors": 45,
+    "min_dist": 0.2,
+    "metric": "cosine",
+    "random_seed": 20260930,
+    "trustworthiness_neighbors": 15
+  },
+  "dynamics": {
+    "transition_approach_seconds": [
+      5.0,
+      5.8
+    ],
+    "post_transition_seconds": [
+      1.0,
+      1.8
+    ],
+    "reference_orbit_seconds": [
+      3.5,
+      4.5
+    ],
+    "oscillation_seconds": [
+      1.8,
+      4.8
+    ],
+    "minimum_orbit_approach_ratio": 1.25,
+    "maximum_peak_frequency_drift_hz": 0.5,
+    "minimum_peak_power_fraction": 0.35,
+    "amplitude_ratio": [
+      0.75,
+      1.35
+    ],
+    "scene_kinds": [
+      "held-frame"
+    ],
+    "scope_note": "settling and oscillation are scored only for the three held stills, where the input is constant after each transition; the moving clips have no constant-input interval"
+  },
+  "display_fps": 30,
+  "program": {
+    "output_dir": "data/natural_manifold/program-v3/program",
+    "fps": 30,
+    "resolution": [
+      1280,
+      720
+    ],
+    "transition_seconds": 1.0,
+    "stimulus_crf": 16,
+    "web_export": {
+      "resolution": [
+        1280,
+        720
+      ],
+      "crf": 24,
+      "maxrate_kbps": 1500,
+      "jpeg_quality": 88
+    },
+    "clips": [
+      {
+        "name": "coast-waves",
+        "title": "Waves breaking over a rocky coast",
+        "theme": "naturalistic",
+        "path": "data/natural_manifold/program-v3/sources/pexels-12465390.mp4",
+        "source_sha256": "c9c549696b8f4c940c658a03ca2deff34dc3f6a75f025fb76d2eb0001649102f",
+        "url": "https://videos.pexels.com/video-files/12465390/12465390-hd_1920_1080_60fps.mp4",
+        "page": "https://www.pexels.com/video/waves-crushing-on-rocks-on-sea-shore-12465390/",
+        "creator": "Vi Ulloa",
+        "license": "Pexels license",
+        "start_seconds": 4.0,
+        "display_seconds": 40.0
+      },
+      {
+        "name": "city-intersection-night",
+        "title": "Night traffic at Macedonio Alcalá, Oaxaca, seen from above",
+        "theme": "city",
+        "path": "data/natural_manifold/program-v3/sources/pexels-19468974.mp4",
+        "source_sha256": "8ed05a8e5a847f1573da9864c5898ba6d28947c3cb9888eccac0d03f0bc3ac69",
+        "url": "https://videos.pexels.com/video-files/19468974/19468974-hd_1920_1080_30fps.mp4",
+        "page": "https://www.pexels.com/video/macedonio-alcala-oaxaca-19468974/",
+        "creator": "Francisco Rodríguez",
+        "license": "Pexels license",
+        "start_seconds": 20.0,
+        "display_seconds": 40.0
+      },
+      {
+        "name": "earth-from-iss",
+        "title": "Earth from the International Space Station",
+        "theme": "creative: Earth from orbit",
+        "path": "data/natural_manifold/program-v3/sources/nasa-jsc2022m000172-exp65-1136s.mp4",
+        "source_sha256": "7cb627aebfb013e3d8f21354e906b42d89e8fb5e2a7b0f8602c97a9a5ffdf0d1",
+        "url": "https://images-assets.nasa.gov/video/jsc2022m000172_Earth_in_4K_Expedition_65_Edition/jsc2022m000172_Earth_in_4K_Expedition_65_Edition~large.mp4",
+        "page": "https://images.nasa.gov/details/jsc2022m000172_Earth_in_4K_Expedition_65_Edition",
+        "creator": "NASA Johnson Space Center (ISS Expedition 65)",
+        "license": "public domain (NASA media; no copyright in the United States)",
+        "extraction": "video stream copied from the NASA ~large.mp4 rendition (1920x1012, 30 fps) starting at the keyframe at or before 1136 s (18:56) of the 50-minute film; start_seconds is relative to this extracted file (local 10 s is about 19:06 of the film)",
+        "start_seconds": 10.0,
+        "display_seconds": 40.0
+      }
+    ],
+    "stills": [
+      {
+        "name": "manicouagan-crater",
+        "title": "Manicouagan impact crater, Quebec",
+        "nasa_id": "iss038e025350",
+        "path": "data/natural_manifold/program-v3/sources/nasa-iss038e025350.jpg",
+        "source_sha256": "bae92ebbf11dbab4d8d1da40c4c70f575d20818beaef470167eea4f65d434020",
+        "url": "https://images-assets.nasa.gov/image/iss038e025350/iss038e025350~orig.jpg",
+        "page": "https://images.nasa.gov/details/iss038e025350",
+        "creator": "NASA (ISS Expedition 38 crew)",
+        "license": "public domain (NASA media; no copyright in the United States)",
+        "crop_box": [
+          0,
+          252,
+          4256,
+          2646
+        ]
+      },
+      {
+        "name": "richat-structure",
+        "title": "Richat Structure ('Eye of the Sahara'), Mauritania",
+        "nasa_id": "iss069e005471",
+        "path": "data/natural_manifold/program-v3/sources/nasa-iss069e005471.jpg",
+        "source_sha256": "b123d1ae46f7b19d43120005c6a02a0ff09f76eddf878908dd74b93b7174ca29",
+        "url": "https://images-assets.nasa.gov/image/iss069e005471/iss069e005471~orig.jpg",
+        "page": "https://images.nasa.gov/details/iss069e005471",
+        "creator": "NASA (ISS Expedition 69 crew)",
+        "license": "public domain (NASA media; no copyright in the United States)",
+        "crop_box": [
+          802,
+          328,
+          5442,
+          2938
+        ]
+      },
+      {
+        "name": "typhoon-eye",
+        "title": "Eye of Typhoon Maysak, 31 March 2015",
+        "nasa_id": "iss043e078169",
+        "path": "data/natural_manifold/program-v3/sources/nasa-iss043e078169.jpg",
+        "source_sha256": "2c309368bb9f9c7d259809b965dfe8f14c7f623b5ac0867aba19dbaae45ccb82",
+        "url": "https://images-assets.nasa.gov/image/iss043e078169/iss043e078169~orig.jpg",
+        "page": "https://images.nasa.gov/details/iss043e078169",
+        "creator": "NASA (ISS Expedition 43 crew; photographed by Samantha Cristoforetti per NASA metadata)",
+        "license": "public domain (NASA media; no copyright in the United States)",
+        "crop_box": [
+          0,
+          90,
+          4928,
+          2862
+        ]
+      }
+    ]
+  },
+  "scenes": [
+    {
+      "name": "coast-waves-01",
+      "kind": "video-clip",
+      "display_group": "coast-waves",
+      "path": "data/natural_manifold/program-v3/program/program-01-coast-waves.mp4",
+      "creator": "Vi Ulloa",
+      "page": "https://www.pexels.com/video/waves-crushing-on-rocks-on-sea-shore-12465390/",
+      "license": "Pexels license",
+      "start_seconds": 0.0,
+      "sha256": "96af4066e8587cbeeaa4070ef8d67259f360961a8f97ef4024fa9a008a35780b"
+    },
+    {
+      "name": "coast-waves-02",
+      "kind": "video-clip",
+      "display_group": "coast-waves",
+      "path": "data/natural_manifold/program-v3/program/program-01-coast-waves.mp4",
+      "creator": "Vi Ulloa",
+      "page": "https://www.pexels.com/video/waves-crushing-on-rocks-on-sea-shore-12465390/",
+      "license": "Pexels license",
+      "start_seconds": 5.0,
+      "sha256": "96af4066e8587cbeeaa4070ef8d67259f360961a8f97ef4024fa9a008a35780b"
+    },
+    {
+      "name": "coast-waves-03",
+      "kind": "video-clip",
+      "display_group": "coast-waves",
+      "path": "data/natural_manifold/program-v3/program/program-01-coast-waves.mp4",
+      "creator": "Vi Ulloa",
+      "page": "https://www.pexels.com/video/waves-crushing-on-rocks-on-sea-shore-12465390/",
+      "license": "Pexels license",
+      "start_seconds": 10.0,
+      "sha256": "96af4066e8587cbeeaa4070ef8d67259f360961a8f97ef4024fa9a008a35780b"
+    },
+    {
+      "name": "coast-waves-04",
+      "kind": "video-clip",
+      "display_group": "coast-waves",
+      "path": "data/natural_manifold/program-v3/program/program-01-coast-waves.mp4",
+      "creator": "Vi Ulloa",
+      "page": "https://www.pexels.com/video/waves-crushing-on-rocks-on-sea-shore-12465390/",
+      "license": "Pexels license",
+      "start_seconds": 15.0,
+      "sha256": "96af4066e8587cbeeaa4070ef8d67259f360961a8f97ef4024fa9a008a35780b"
+    },
+    {
+      "name": "coast-waves-05",
+      "kind": "video-clip",
+      "display_group": "coast-waves",
+      "path": "data/natural_manifold/program-v3/program/program-01-coast-waves.mp4",
+      "creator": "Vi Ulloa",
+      "page": "https://www.pexels.com/video/waves-crushing-on-rocks-on-sea-shore-12465390/",
+      "license": "Pexels license",
+      "start_seconds": 20.0,
+      "sha256": "96af4066e8587cbeeaa4070ef8d67259f360961a8f97ef4024fa9a008a35780b"
+    },
+    {
+      "name": "coast-waves-06",
+      "kind": "video-clip",
+      "display_group": "coast-waves",
+      "path": "data/natural_manifold/program-v3/program/program-01-coast-waves.mp4",
+      "creator": "Vi Ulloa",
+      "page": "https://www.pexels.com/video/waves-crushing-on-rocks-on-sea-shore-12465390/",
+      "license": "Pexels license",
+      "start_seconds": 25.0,
+      "sha256": "96af4066e8587cbeeaa4070ef8d67259f360961a8f97ef4024fa9a008a35780b"
+    },
+    {
+      "name": "coast-waves-07",
+      "kind": "video-clip",
+      "display_group": "coast-waves",
+      "path": "data/natural_manifold/program-v3/program/program-01-coast-waves.mp4",
+      "creator": "Vi Ulloa",
+      "page": "https://www.pexels.com/video/waves-crushing-on-rocks-on-sea-shore-12465390/",
+      "license": "Pexels license",
+      "start_seconds": 30.0,
+      "sha256": "96af4066e8587cbeeaa4070ef8d67259f360961a8f97ef4024fa9a008a35780b"
+    },
+    {
+      "name": "coast-waves-08",
+      "kind": "video-clip",
+      "display_group": "coast-waves",
+      "path": "data/natural_manifold/program-v3/program/program-01-coast-waves.mp4",
+      "creator": "Vi Ulloa",
+      "page": "https://www.pexels.com/video/waves-crushing-on-rocks-on-sea-shore-12465390/",
+      "license": "Pexels license",
+      "start_seconds": 35.0,
+      "sha256": "96af4066e8587cbeeaa4070ef8d67259f360961a8f97ef4024fa9a008a35780b"
+    },
+    {
+      "name": "city-intersection-night-01",
+      "kind": "video-clip",
+      "display_group": "city-intersection-night",
+      "path": "data/natural_manifold/program-v3/program/program-02-city-intersection-night.mp4",
+      "creator": "Francisco Rodríguez",
+      "page": "https://www.pexels.com/video/macedonio-alcala-oaxaca-19468974/",
+      "license": "Pexels license",
+      "start_seconds": 0.0,
+      "sha256": "2eed2693290c4b0dd5aa6b64980688ac7185c25dd4bac599bcf25164bdcb5c78"
+    },
+    {
+      "name": "city-intersection-night-02",
+      "kind": "video-clip",
+      "display_group": "city-intersection-night",
+      "path": "data/natural_manifold/program-v3/program/program-02-city-intersection-night.mp4",
+      "creator": "Francisco Rodríguez",
+      "page": "https://www.pexels.com/video/macedonio-alcala-oaxaca-19468974/",
+      "license": "Pexels license",
+      "start_seconds": 5.0,
+      "sha256": "2eed2693290c4b0dd5aa6b64980688ac7185c25dd4bac599bcf25164bdcb5c78"
+    },
+    {
+      "name": "city-intersection-night-03",
+      "kind": "video-clip",
+      "display_group": "city-intersection-night",
+      "path": "data/natural_manifold/program-v3/program/program-02-city-intersection-night.mp4",
+      "creator": "Francisco Rodríguez",
+      "page": "https://www.pexels.com/video/macedonio-alcala-oaxaca-19468974/",
+      "license": "Pexels license",
+      "start_seconds": 10.0,
+      "sha256": "2eed2693290c4b0dd5aa6b64980688ac7185c25dd4bac599bcf25164bdcb5c78"
+    },
+    {
+      "name": "city-intersection-night-04",
+      "kind": "video-clip",
+      "display_group": "city-intersection-night",
+      "path": "data/natural_manifold/program-v3/program/program-02-city-intersection-night.mp4",
+      "creator": "Francisco Rodríguez",
+      "page": "https://www.pexels.com/video/macedonio-alcala-oaxaca-19468974/",
+      "license": "Pexels license",
+      "start_seconds": 15.0,
+      "sha256": "2eed2693290c4b0dd5aa6b64980688ac7185c25dd4bac599bcf25164bdcb5c78"
+    },
+    {
+      "name": "city-intersection-night-05",
+      "kind": "video-clip",
+      "display_group": "city-intersection-night",
+      "path": "data/natural_manifold/program-v3/program/program-02-city-intersection-night.mp4",
+      "creator": "Francisco Rodríguez",
+      "page": "https://www.pexels.com/video/macedonio-alcala-oaxaca-19468974/",
+      "license": "Pexels license",
+      "start_seconds": 20.0,
+      "sha256": "2eed2693290c4b0dd5aa6b64980688ac7185c25dd4bac599bcf25164bdcb5c78"
+    },
+    {
+      "name": "city-intersection-night-06",
+      "kind": "video-clip",
+      "display_group": "city-intersection-night",
+      "path": "data/natural_manifold/program-v3/program/program-02-city-intersection-night.mp4",
+      "creator": "Francisco Rodríguez",
+      "page": "https://www.pexels.com/video/macedonio-alcala-oaxaca-19468974/",
+      "license": "Pexels license",
+      "start_seconds": 25.0,
+      "sha256": "2eed2693290c4b0dd5aa6b64980688ac7185c25dd4bac599bcf25164bdcb5c78"
+    },
+    {
+      "name": "city-intersection-night-07",
+      "kind": "video-clip",
+      "display_group": "city-intersection-night",
+      "path": "data/natural_manifold/program-v3/program/program-02-city-intersection-night.mp4",
+      "creator": "Francisco Rodríguez",
+      "page": "https://www.pexels.com/video/macedonio-alcala-oaxaca-19468974/",
+      "license": "Pexels license",
+      "start_seconds": 30.0,
+      "sha256": "2eed2693290c4b0dd5aa6b64980688ac7185c25dd4bac599bcf25164bdcb5c78"
+    },
+    {
+      "name": "city-intersection-night-08",
+      "kind": "video-clip",
+      "display_group": "city-intersection-night",
+      "path": "data/natural_manifold/program-v3/program/program-02-city-intersection-night.mp4",
+      "creator": "Francisco Rodríguez",
+      "page": "https://www.pexels.com/video/macedonio-alcala-oaxaca-19468974/",
+      "license": "Pexels license",
+      "start_seconds": 35.0,
+      "sha256": "2eed2693290c4b0dd5aa6b64980688ac7185c25dd4bac599bcf25164bdcb5c78"
+    },
+    {
+      "name": "earth-from-iss-01",
+      "kind": "video-clip",
+      "display_group": "earth-from-iss",
+      "path": "data/natural_manifold/program-v3/program/program-03-earth-from-iss.mp4",
+      "creator": "NASA Johnson Space Center (ISS Expedition 65)",
+      "page": "https://images.nasa.gov/details/jsc2022m000172_Earth_in_4K_Expedition_65_Edition",
+      "license": "public domain (NASA media; no copyright in the United States)",
+      "start_seconds": 0.0,
+      "sha256": "1c802d478bd209bada7916c56629a9cd9d943f47b53a612a63c2194fa3134ca1"
+    },
+    {
+      "name": "earth-from-iss-02",
+      "kind": "video-clip",
+      "display_group": "earth-from-iss",
+      "path": "data/natural_manifold/program-v3/program/program-03-earth-from-iss.mp4",
+      "creator": "NASA Johnson Space Center (ISS Expedition 65)",
+      "page": "https://images.nasa.gov/details/jsc2022m000172_Earth_in_4K_Expedition_65_Edition",
+      "license": "public domain (NASA media; no copyright in the United States)",
+      "start_seconds": 5.0,
+      "sha256": "1c802d478bd209bada7916c56629a9cd9d943f47b53a612a63c2194fa3134ca1"
+    },
+    {
+      "name": "earth-from-iss-03",
+      "kind": "video-clip",
+      "display_group": "earth-from-iss",
+      "path": "data/natural_manifold/program-v3/program/program-03-earth-from-iss.mp4",
+      "creator": "NASA Johnson Space Center (ISS Expedition 65)",
+      "page": "https://images.nasa.gov/details/jsc2022m000172_Earth_in_4K_Expedition_65_Edition",
+      "license": "public domain (NASA media; no copyright in the United States)",
+      "start_seconds": 10.0,
+      "sha256": "1c802d478bd209bada7916c56629a9cd9d943f47b53a612a63c2194fa3134ca1"
+    },
+    {
+      "name": "earth-from-iss-04",
+      "kind": "video-clip",
+      "display_group": "earth-from-iss",
+      "path": "data/natural_manifold/program-v3/program/program-03-earth-from-iss.mp4",
+      "creator": "NASA Johnson Space Center (ISS Expedition 65)",
+      "page": "https://images.nasa.gov/details/jsc2022m000172_Earth_in_4K_Expedition_65_Edition",
+      "license": "public domain (NASA media; no copyright in the United States)",
+      "start_seconds": 15.0,
+      "sha256": "1c802d478bd209bada7916c56629a9cd9d943f47b53a612a63c2194fa3134ca1"
+    },
+    {
+      "name": "earth-from-iss-05",
+      "kind": "video-clip",
+      "display_group": "earth-from-iss",
+      "path": "data/natural_manifold/program-v3/program/program-03-earth-from-iss.mp4",
+      "creator": "NASA Johnson Space Center (ISS Expedition 65)",
+      "page": "https://images.nasa.gov/details/jsc2022m000172_Earth_in_4K_Expedition_65_Edition",
+      "license": "public domain (NASA media; no copyright in the United States)",
+      "start_seconds": 20.0,
+      "sha256": "1c802d478bd209bada7916c56629a9cd9d943f47b53a612a63c2194fa3134ca1"
+    },
+    {
+      "name": "earth-from-iss-06",
+      "kind": "video-clip",
+      "display_group": "earth-from-iss",
+      "path": "data/natural_manifold/program-v3/program/program-03-earth-from-iss.mp4",
+      "creator": "NASA Johnson Space Center (ISS Expedition 65)",
+      "page": "https://images.nasa.gov/details/jsc2022m000172_Earth_in_4K_Expedition_65_Edition",
+      "license": "public domain (NASA media; no copyright in the United States)",
+      "start_seconds": 25.0,
+      "sha256": "1c802d478bd209bada7916c56629a9cd9d943f47b53a612a63c2194fa3134ca1"
+    },
+    {
+      "name": "earth-from-iss-07",
+      "kind": "video-clip",
+      "display_group": "earth-from-iss",
+      "path": "data/natural_manifold/program-v3/program/program-03-earth-from-iss.mp4",
+      "creator": "NASA Johnson Space Center (ISS Expedition 65)",
+      "page": "https://images.nasa.gov/details/jsc2022m000172_Earth_in_4K_Expedition_65_Edition",
+      "license": "public domain (NASA media; no copyright in the United States)",
+      "start_seconds": 30.0,
+      "sha256": "1c802d478bd209bada7916c56629a9cd9d943f47b53a612a63c2194fa3134ca1"
+    },
+    {
+      "name": "earth-from-iss-08",
+      "kind": "video-clip",
+      "display_group": "earth-from-iss",
+      "path": "data/natural_manifold/program-v3/program/program-03-earth-from-iss.mp4",
+      "creator": "NASA Johnson Space Center (ISS Expedition 65)",
+      "page": "https://images.nasa.gov/details/jsc2022m000172_Earth_in_4K_Expedition_65_Edition",
+      "license": "public domain (NASA media; no copyright in the United States)",
+      "start_seconds": 35.0,
+      "sha256": "1c802d478bd209bada7916c56629a9cd9d943f47b53a612a63c2194fa3134ca1"
+    },
+    {
+      "name": "manicouagan-crater",
+      "kind": "held-frame",
+      "display_group": "manicouagan-crater",
+      "path": "data/natural_manifold/program-v3/program/program-04-manicouagan-crater.mp4",
+      "creator": "NASA (ISS Expedition 38 crew)",
+      "page": "https://images.nasa.gov/details/iss038e025350",
+      "license": "public domain (NASA media; no copyright in the United States)",
+      "start_seconds": 0.0,
+      "sha256": "e627ff0645a95dfaf234a55e6ce1aca1c0bae283e0c5fba76d3fa92d53e57b76"
+    },
+    {
+      "name": "richat-structure",
+      "kind": "held-frame",
+      "display_group": "richat-structure",
+      "path": "data/natural_manifold/program-v3/program/program-05-richat-structure.mp4",
+      "creator": "NASA (ISS Expedition 69 crew)",
+      "page": "https://images.nasa.gov/details/iss069e005471",
+      "license": "public domain (NASA media; no copyright in the United States)",
+      "start_seconds": 0.0,
+      "sha256": "22a6f053486d9914d8f95d7068c989d96a65dc18e94e1c0121b202d3f299ba54"
+    },
+    {
+      "name": "typhoon-eye",
+      "kind": "held-frame",
+      "display_group": "typhoon-eye",
+      "path": "data/natural_manifold/program-v3/program/program-06-typhoon-eye.mp4",
+      "creator": "NASA (ISS Expedition 43 crew; photographed by Samantha Cristoforetti per NASA metadata)",
+      "page": "https://images.nasa.gov/details/iss043e078169",
+      "license": "public domain (NASA media; no copyright in the United States)",
+      "start_seconds": 0.0,
+      "sha256": "2eea9515450ef8408f3dc9f1913f5abb2ea43cf0b2b279449fbf6a4a2dfb23f8"
+    }
+  ],
+  "trajectory_description": "five-second windows of three moving clips (coast, city, Earth from the ISS) and three held ISS photographs",
+  "program_manifest": "data/natural_manifold/program-v3/program/program-manifest.json",
+  "program_manifest_sha256": "e7776703ea2039c8acb1d7e2e31bcb858c0fe4d7b9fc4b05f2176445c6bb1d98",
+  "display_smoothing_seconds": 0.04,
+  "encoding": {
+    "crf": 23,
+    "maxrate_kbps": 2200
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "note": "Web-only preset clips for the interactive demo; not part of the film program.",
+  "clips": [
+    {
+      "name": "coral-reef",
+      "title": "Coral reef with tropical fish",
+      "theme": "underwater / reef",
+      "creator": "Magda Ehlers",
+      "license": "Pexels license",
+      "page": "https://www.pexels.com/video/marine-life-of-fishes-and-corals-underwater-3765078/",
+      "url": "https://videos.pexels.com/video-files/3765078/3765078-hd_1920_1080_30fps.mp4",
+      "path": "data/natural_manifold/program-v3/sources/pexels-3765078.mp4",
+      "source_sha256": "5adeb28497364de4c5f13fdefeeb461c39903f818218aabc4c4ea56b76d3c813",
+      "start_seconds": 5.0,
+      "display_seconds": 25.0
+    },
+    {
+      "name": "bee-on-flowers",
+      "title": "Bee foraging on yellow flowers",
+      "theme": "insects",
+      "creator": "Michael Herren",
+      "license": "Pexels license",
+      "page": "https://www.pexels.com/video/bee-on-yellow-flowers-5423853/",
+      "url": "https://videos.pexels.com/video-files/5423853/5423853-hd_1920_1080_30fps.mp4",
+      "path": "data/natural_manifold/program-v3/sources/pexels-5423853.mp4",
+      "source_sha256": "f12b7ed5ccf0397f7e5cb56cf59fc2e54955912ff224d01d07e09e8c8a8313b9",
+      "start_seconds": 4.0,
+      "display_seconds": 25.0
+    },
+    {
+      "name": "fireworks",
+      "title": "Fireworks over a night sky",
+      "theme": "fireworks / abstract light",
+      "creator": "Justin Stretch",
+      "license": "Pexels license",
+      "page": "https://www.pexels.com/video/fireworks-exploding-in-sky-at-night-10974178/",
+      "url": "https://videos.pexels.com/video-files/10974178/10974178-hd_1920_1080_30fps.mp4",
+      "path": "data/natural_manifold/program-v3/sources/pexels-10974178.mp4",
+      "source_sha256": "8498780e19f26d11b6defea50be15babac35037f5de9b6f9caddb20255844d78",
+      "start_seconds": 24.0,
+      "display_seconds": 24.0
+    }
+  ]
+}
