@@ -18,6 +18,8 @@ COMMANDS = {
     "natural-manifold": "axosim_demo.natural_manifold",
     "natural-geometry": "axosim_demo.natural_geometry",
     "limit-cycle": "axosim_demo.limit_cycle",
+    "demo-database": "axosim_demo.demo_database",
+    "browser-demo": "axosim_demo.browser_demo",
 }
 
 

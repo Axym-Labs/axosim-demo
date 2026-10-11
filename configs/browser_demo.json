@@ -1,0 +1,56 @@
+{
+  "scope": "Interactive in-browser AxoSim FlyVis demo: exported runtime, image protocol, latent space and reference statistics",
+  "vision_config": "configs/flyvis_moving_edge.json",
+  "scored_summary": "data/vision_axosim/summary.json",
+  "stimulus": {
+    "sample_seconds": 0.004,
+    "block_samples": 4,
+    "frame_width": 640,
+    "frame_height": 360,
+    "lattice_scale": 0.47,
+    "image_crop": "center crop to 16:9, then resize to 640x360",
+    "luminance": [0.2126, 0.7152, 0.0722],
+    "normalization": {"mean": 0.5, "standard_deviation": 0.15, "clip": [0.0, 1.0]},
+    "gray_level": 0.5
+  },
+  "record_layers": ["L1", "Mi1", "T4c", "T5c"],
+  "image_protocol": {
+    "warmup_seconds": 1.0,
+    "hold_seconds": 5.0,
+    "descriptor_seconds": [2.0, 5.0],
+    "speed_seconds": [0.0, 5.0],
+    "orbit": {
+      "transition_seconds": [-0.8, 0.0],
+      "post_transition_seconds": [0.0, 0.8],
+      "reference_orbit_seconds": [3.5, 5.0],
+      "oscillation_seconds": [2.0, 5.0],
+      "approach_pca_components": 10,
+      "minimum_orbit_approach_ratio": 1.25,
+      "maximum_peak_frequency_drift_hz": 0.5,
+      "minimum_peak_power_fraction": 0.35,
+      "amplitude_ratio": [0.75, 1.35]
+    },
+    "perturbation": {
+      "sigma_window_seconds": [3.5, 5.0],
+      "distance_orbit_seconds": [4.0, 5.0],
+      "amplitude_sigma": 0.25,
+      "seeds": [0, 1, 2, 3, 4, 5, 6, 7],
+      "continuation_seconds": 2.0,
+      "late_seconds": 0.5,
+      "return_threshold": 0.1,
+      "sigma_floor": 1e-6
+    }
+  },
+  "latent": {
+    "pca_components": 50,
+    "fit_images": 3000,
+    "fit_samples_per_image": 24,
+    "density_neighbors": 10,
+    "density_reference_states": 40000,
+    "transform_neighbors": 15,
+    "descriptor_umap": {"n_components": 10, "n_neighbors": 30, "min_dist": 0.0, "metric": "euclidean"},
+    "display_umap": {"n_components": 3, "n_neighbors": 30, "min_dist": 0.15, "metric": "euclidean"},
+    "state_umap": {"n_components": 3, "n_neighbors": 45, "min_dist": 0.2, "metric": "euclidean"},
+    "random_seed": 20261011
+  }
+}
