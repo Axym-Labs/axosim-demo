@@ -41,8 +41,9 @@ STAT_KEYS = (
 )
 
 
-def read_manifest(db):
-    rows = [json.loads(line) for line in (Path(db) / "manifest.jsonl").read_text().splitlines() if line]
+def read_manifest(db, manifest=None):
+    path = Path(manifest) if manifest is not None else Path(db) / "manifest.jsonl"
+    rows = [json.loads(line) for line in path.read_text().splitlines() if line]
     return sorted(rows, key=lambda row: row["id"])
 
 
@@ -131,11 +132,11 @@ class Runner:
         return result
 
 
-def fit_latent(db, work, *, config=DEFAULT_CONFIG, batch=32):
+def fit_latent(db, work, *, config=DEFAULT_CONFIG, batch=32, manifest=None):
     """Pass 1: standardization, principal components and density reference."""
     runner = Runner(config=config)
     cfg = runner.contract["latent"]
-    rows = read_manifest(db)
+    rows = read_manifest(db, manifest)
     rng = np.random.default_rng(cfg["random_seed"])
     by_category = {}
     for index, row in enumerate(rows):
@@ -211,18 +212,23 @@ def load_latent(work, device):
     return latent, density
 
 
-def run_database(db, work, *, config=DEFAULT_CONFIG, batch=32, chunk=1024, limit=None, seed=7):
+def run_database(db, work, *, config=DEFAULT_CONFIG, batch=32, chunk=1024, limit=None, seed=7, manifest=None, skip_done=True):
     """Pass 2: statistics for every database image, resumable in chunks."""
     runner = Runner(config=config)
     latent, density = load_latent(work, runner.device)
     density["k"] = runner.contract["latent"]["density_neighbors"]
-    rows = read_manifest(db)[:limit]
+    rows = read_manifest(db, manifest)[:limit]
     out = Path(work) / "chunks"
     out.mkdir(parents=True, exist_ok=True)
+    if skip_done:
+        done_ids = set()
+        for path in out.glob("*.npz"):
+            done_ids.update(np.load(path)["ids"].tolist())
+        rows = [row for row in rows if row["id"] not in done_ids]
     tail = runner.warm_record
     started = time.monotonic()
     for first in range(0, len(rows), chunk):
-        path = out / f"{first:06d}.npz"
+        path = out / f"{rows[first]['id']}-{len(rows[first:first + chunk])}.npz"
         if path.exists():
             continue
         part = rows[first:first + chunk]
@@ -249,12 +255,20 @@ def run_database(db, work, *, config=DEFAULT_CONFIG, batch=32, chunk=1024, limit
         done = first + len(part)
         rate = done / (time.monotonic() - started)
         print(f"database {done}/{len(rows)} {rate:.1f} img/s", flush=True)
-    return merge_chunks(work)
+    return merge_chunks(work, db if manifest is None else None)
 
 
-def merge_chunks(work):
+def merge_chunks(work, db=None):
+    """Merge chunks, keep one row per id, restricted to the final manifest if given."""
     parts = [np.load(path) for path in sorted((Path(work) / "chunks").glob("*.npz"))]
     merged = {key: np.concatenate([part[key] for part in parts]) for key in parts[0].files}
+    _, first = np.unique(merged["ids"], return_index=True)
+    keep = np.sort(first)
+    if db is not None:
+        final = {row["id"] for row in read_manifest(db)}
+        keep = keep[np.isin(merged["ids"][keep], list(final))]
+    order = keep[np.argsort(merged["ids"][keep])]
+    merged = {key: value[order] for key, value in merged.items()}
     np.savez(Path(work) / "database-stats.npz", **merged)
     return {"images": len(merged["ids"]), "stable_fraction": float(merged["stable_orbit"].mean())}
 
@@ -478,13 +492,13 @@ def fit_umaps(work, *, config=DEFAULT_CONFIG, cloud_image_states=20000, video_ev
 
 def knn_transform(points, reference, coords, k):
     """Inverse-distance k-NN placement (browser `knnTransform`)."""
-    points = torch.as_tensor(points, dtype=torch.float32)
-    reference = torch.as_tensor(reference, dtype=torch.float32)
+    points = torch.as_tensor(points, dtype=torch.float32, device="cpu")
+    reference = torch.as_tensor(reference, dtype=torch.float32, device="cpu")
     distance = torch.cdist(points, reference, compute_mode="donot_use_mm_for_euclid_dist")
     values, index = distance.topk(k, largest=False)
     weight = 1.0 / values.clamp_min(1e-9)
     weight = weight / weight.sum(dim=1, keepdim=True)
-    return (weight[..., None] * torch.as_tensor(coords)[index]).sum(dim=1).numpy()
+    return (weight[..., None] * torch.as_tensor(coords, device="cpu")[index]).sum(dim=1).numpy()
 
 
 def transform_overlap(descriptors, umap10, k, *, samples=2000, seed=0):
@@ -563,7 +577,7 @@ def export_site(work, output, *, clips=None):
     return {"output": str(output)}
 
 
-def export_database(db, work, output, *, ids=None, image_root="images"):
+def export_database(db, work, output, *, ids=None, image_root="images", sharded=True):
     """Retrieval database (all images, or a subset for the bundled fallback)."""
     rows = {row["id"]: row for row in read_manifest(db)}
     stats = np.load(Path(work) / "database-stats.npz")
@@ -584,7 +598,7 @@ def export_database(db, work, output, *, ids=None, image_root="images"):
             ("category", np.asarray([categories.index(rows[i]["category"]) for i in chosen], dtype=np.uint8)),
             ("stable", stats["stable_orbit"][select].astype(np.uint8)),
         ],
-        meta={"ids": chosen, "categories": categories, "imageRoot": image_root},
+        meta={"ids": chosen, "categories": categories, "imageRoot": image_root, "sharded": sharded},
     )
     meta_dir = Path(output) / "meta"
     meta_dir.mkdir(parents=True, exist_ok=True)
