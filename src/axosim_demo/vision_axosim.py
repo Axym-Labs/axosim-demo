@@ -175,7 +175,13 @@ class AxoSimFlyVis:
         source_dt,
         target_dt,
         record_index=None,
+        return_native=False,
     ):
+        """Run a (time, 721) stimulus; responses are aligned to the source cadence.
+
+        With ``return_native`` the recorded activity is also returned at the
+        AxoSim cadence, unaligned, together with its prediction times.
+        """
         if stimulus.ndim != 2 or stimulus.shape[1] != 721:
             raise ValueError("Expected FlyVis stimulus with shape (time, 721)")
         resampled, target_time = _resample(stimulus, source_dt, target_dt)
@@ -229,6 +235,8 @@ class AxoSimFlyVis:
             bounds_error=False,
             fill_value=(recorded[0], recorded[-1]),
         )(source_time).astype(np.float32)
+        if return_native:
+            return aligned, aligned_recorded, recorded, prediction_time
         return aligned, aligned_recorded
 
 

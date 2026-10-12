@@ -322,11 +322,8 @@ def _analyze_settling_and_oscillation(
     }
 
 
-def run_experiment(
-    *, config=DEFAULT_CONFIG, root, output, checkpoint=DEFAULT_CHECKPOINT, device="cuda"
-):
-    config = Path(config)
-    contract = json.loads(config.read_text())
+def _film_runtime(contract, *, root, checkpoint, device):
+    """The frozen AxoSim visual circuit and recorded cells named by ``contract``."""
     vision_contract = json.loads(Path(contract["vision_config"]).read_text())
     scored = json.loads(Path(contract["scored_summary"]).read_text())
     if not scored["video_gate_passed"]:
@@ -352,10 +349,18 @@ def run_experiment(
             for name in layers
         ]
     )
-    u, v, retinal_x, retinal_y = _retinal_coordinates(network)
+    return runtime, network, vision_contract, scored, layers, record_index
+
+
+def _program_stimulus(contract, retinal_x, retinal_y):
+    """Sample every scene and join the overlapping windows into one stimulus.
+
+    Each scene window carries one second of leading context. The first context
+    initializes the circuit; later contexts overlap the previous window's
+    completed transition and are not advanced twice.
+    """
     stimuli, media = [], []
     source_dt = float(contract["source_dt_seconds"])
-    started = time_module.monotonic()
     time = None
     normalization = contract.get("retinal_normalization")
     for scene in contract["scenes"]:
@@ -380,17 +385,35 @@ def run_experiment(
             ).astype(np.float32)
         stimuli.append(stimulus)
         media.append(source_metadata)
-
-    # Run the film as one continuous experiment. Each generated segment contains
-    # one second of leading context. The first context initializes the circuit;
-    # later contexts overlap the previous segment's completed transition, so
-    # they are not advanced twice. The analysis windows retain that preceding
-    # second and introduce no hidden-state reset at a visible boundary.
     warmup_steps = round(float(contract["warmup_seconds"]) / source_dt)
-    stride = len(time) - warmup_steps
     continuous_stimulus = np.concatenate(
         [stimuli[0], *[stimulus[warmup_steps:] for stimulus in stimuli[1:]]]
     )
+    return continuous_stimulus, time, media
+
+
+def run_experiment(
+    *, config=DEFAULT_CONFIG, root, output, checkpoint=DEFAULT_CHECKPOINT, device="cuda"
+):
+    config = Path(config)
+    contract = json.loads(config.read_text())
+    runtime, network, vision_contract, scored, layers, record_index = _film_runtime(
+        contract, root=root, checkpoint=checkpoint, device=device
+    )
+    selected = scored["selected"]
+    u, v, retinal_x, retinal_y = _retinal_coordinates(network)
+    source_dt = float(contract["source_dt_seconds"])
+    started = time_module.monotonic()
+    normalization = contract.get("retinal_normalization")
+    # Run the film as one continuous experiment. The analysis windows retain
+    # the preceding second and introduce no hidden-state reset at a visible
+    # boundary.
+    continuous_stimulus, time, media = _program_stimulus(
+        contract, retinal_x, retinal_y
+    )
+    stimuli = contract["scenes"]
+    warmup_steps = round(float(contract["warmup_seconds"]) / source_dt)
+    stride = len(time) - warmup_steps
     _, continuous_response = runtime.run_stimulus(
         continuous_stimulus,
         source_dt=source_dt,
@@ -552,13 +575,134 @@ def run_experiment(
     return report
 
 
-def _right_gradient():
+def _load_dynamic(recording_dir):
+    """Hash-checked 5 ms scene shards of a finished run, as (scenes, time, layers, 721)."""
+    recording_dir = Path(recording_dir)
+    manifest = json.loads((recording_dir / "recording-manifest.json").read_text())
+    shards = []
+    for item in manifest["dynamic_shards"]:
+        path = recording_dir / item["file"]
+        if _sha256(path) != item["sha256"]:
+            raise ValueError(f"Recording shard hash mismatch for {path}")
+        with np.load(path) as data:
+            shards.append(data["dynamic"])
+    return np.asarray(shards)
+
+
+def record_block_states(
+    *,
+    config=DEFAULT_CONFIG,
+    root,
+    recording,
+    output,
+    checkpoint=DEFAULT_CHECKPOINT,
+    device="cuda",
+):
+    """Repeat the film's continuous run and keep the last recorded sample of every block.
+
+    The stored 5 ms recording interpolates between AxoSim's 4 ms forecasts, and
+    the recorded state varies strongly within each 16 ms block. The interactive
+    demo's state space holds block-end states only, so placing the film into it
+    needs those exact samples. The repeat must reproduce the stored recording.
+    """
+    contract = json.loads(Path(config).read_text())
+    runtime, network, vision_contract, _, layers, record_index = _film_runtime(
+        contract, root=root, checkpoint=checkpoint, device=device
+    )
+    _, _, retinal_x, retinal_y = _retinal_coordinates(network)
+    continuous_stimulus, time, _ = _program_stimulus(contract, retinal_x, retinal_y)
+    source_dt = float(contract["source_dt_seconds"])
+    _, aligned, native, prediction_time = runtime.run_stimulus(
+        continuous_stimulus,
+        source_dt=source_dt,
+        target_dt=vision_contract["protocol"]["axosim_dt_seconds"],
+        record_index=record_index,
+        return_native=True,
+    )
+    aligned = aligned.reshape(-1, len(layers), 721)
+    stored = _load_dynamic(recording)
+    stride = len(time) - round(float(contract["warmup_seconds"]) / source_dt)
+    repeated = np.asarray(
+        [aligned[index * stride : index * stride + len(time)] for index in range(len(stored))]
+    )
+    difference = np.abs(repeated - stored)
+    scale = float(np.abs(stored).max())
+    # The last forecast of each four-sample block.
+    block_end = np.arange(3, len(native), 4)
+    states = native[block_end].astype(np.float32)
+    block_time = prediction_time[block_end].astype(np.float64)
+    output = Path(output)
+    output.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(output / "block-states.npz", states=states, time=block_time)
+    report = {
+        "object": "last recorded forecast of every 16 ms AxoSim block of the film's continuous run",
+        "states": list(states.shape),
+        "time_seconds": [float(block_time[0]), float(block_time[-1])],
+        "reproduction": {
+            "max_abs_difference": float(difference.max()),
+            "per_scene_max_abs_difference": difference.reshape(len(stored), -1).max(axis=1).tolist(),
+            "stored_max_abs": scale,
+        },
+        "recording_manifest_sha256": _sha256(Path(recording) / "recording-manifest.json"),
+    }
+    (output / "block-states.json").write_text(json.dumps(report, indent=2) + "\n")
+    return report
+
+
+def place_in_demo_space(*, config=DEFAULT_CONFIG, block_states, demo_work, output, neighbors=10):
+    """Place block-end film states into the interactive demo's 3D state space.
+
+    Uses the demo's latent projection and its inverse-distance k-nearest-neighbour
+    placement into the state-cloud UMAP (browser ``knnTransform`` with 10
+    neighbours), then the film's causal display smoothing. Writes ``path.bin``
+    (float32, n x 3) and ``path.json`` for the three.js panel renderer.
+    """
+    from .demo_database import knn_transform
+
+    contract = json.loads(Path(config).read_text())
+    with np.load(Path(block_states) / "block-states.npz") as data:
+        states, block_time = data["states"], data["time"]
+    demo_work = Path(demo_work)
+    with np.load(demo_work / "latent.npz") as latent:
+        z = ((states - latent["mean"]) / latent["scale"]) @ latent["components"].T
+    with np.load(demo_work / "state-cloud.npz") as cloud:
+        reference, coords = cloud["states"], cloud["coords"]
+    placed = np.concatenate(
+        [
+            knn_transform(z[start : start + 2000], reference, coords, neighbors)
+            for start in range(0, len(z), 2000)
+        ]
+    )
+    dt = float(np.median(np.diff(block_time)))
+    smoothing_seconds = float(contract.get("display_smoothing_seconds", 0.18))
+    smoothed = _causal_smooth_path(placed, dt=dt, time_constant_seconds=smoothing_seconds)
+    # Film time zero is the first displayed moment, after one second of context.
+    display_start = max(float(contract["warmup_seconds"]), 1.0)
+    film_time = block_time - display_start
+    keep = film_time >= 0
+    output = Path(output)
+    output.mkdir(parents=True, exist_ok=True)
+    (output / "path.bin").write_bytes(smoothed[keep].astype("<f4").tobytes())
+    meta = {
+        "count": int(keep.sum()),
+        "dt": dt,
+        "first_time": float(film_time[keep][0]),
+        "smoothing_seconds": smoothing_seconds,
+        "neighbors": neighbors,
+        "trail_seconds": 1.6,
+        "object": "block-end 2,884-neuron film states placed into the connectome demo's 3D state-space UMAP; time is film time in seconds",
+    }
+    (output / "path.json").write_text(json.dumps(meta, indent=2) + "\n")
+    return meta
+
+
+def _right_gradient(start=540, exponent=0.72):
     """Fade real footage into a dark neural-space canvas without a panel edge."""
     overlay = Image.new("RGBA", (WIDTH, HEIGHT), (7, 8, 13, 0))
     draw = ImageDraw.Draw(overlay)
-    for x in range(540, WIDTH):
-        fraction = (x - 540) / (WIDTH - 540)
-        alpha = int(246 * (fraction**0.72))
+    for x in range(start, WIDTH):
+        fraction = (x - start) / (WIDTH - start)
+        alpha = int(246 * (fraction**exponent))
         draw.line((x, 0, x, HEIGHT), fill=(7, 8, 13, alpha))
     return overlay
 
@@ -671,7 +815,26 @@ def _draw_manifold(image, projected_paths, depth_paths, active_scene, trail):
         draw.ellipse((x - 7, y - 7, x + 7, y + 7), fill=(255, 239, 199, 255))
 
 
-def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
+def _composite_panel(background, frames_dir, frame):
+    """Lay a premultiplied three.js panel frame over the right edge of ``background``."""
+    with Image.open(Path(frames_dir) / f"frame-{frame:05d}.png") as panel:
+        panel = np.asarray(panel, dtype=np.float32) / 255
+    height, width = panel.shape[:2]
+    canvas = np.asarray(background, dtype=np.float32) / 255
+    region = canvas[:height, WIDTH - width :, :3]
+    # The browser composites the canvas as rgb + page * (1 - alpha).
+    region[:] = panel[..., :3] + region * (1 - panel[..., 3:])
+    canvas[:height, WIDTH - width :, 3] = 1
+    return Image.fromarray(np.rint(np.clip(canvas, 0, 1) * 255).astype(np.uint8), "RGBA")
+
+
+def render_video(
+    *, config=DEFAULT_CONFIG, recording, summary, output, fps=30, state_space_frames=None
+):
+    """Render the film; ``state_space_frames`` swaps the fixed-camera manifold for
+    panel frames from the connectome demo's three.js renderer (scripts/state-space-film
+    in the website), which show the film's block-end states placed into the demo's
+    rotating state space."""
     contract = json.loads(Path(config).read_text())
     report = json.loads(Path(summary).read_text())
     if report["status"] != "complete":
@@ -707,6 +870,11 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
     total_frames = round(total_seconds * fps)
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
+    panel = None
+    if state_space_frames is not None:
+        panel = json.loads((Path(state_space_frames) / "meta.json").read_text())
+        if panel["frames"] < total_frames or panel["fps"] != fps or panel["height"] > HEIGHT:
+            raise ValueError("State-space frames do not cover the film")
     readers = [imageio.get_reader(scene["path"]) for scene in contract["scenes"]]
     # Windows cut from one clip share a display group and are highlighted together.
     groups = [
@@ -717,7 +885,8 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
         group: [index for index, value in enumerate(groups) if value == group]
         for group in groups
     }
-    gradient = _right_gradient()
+    # The demo's pale cloud needs the darker canvas it has on the website.
+    gradient = _right_gradient() if state_space_frames is None else _right_gradient(440, 0.5)
     title_font = _font(25, weight=600)
     # Moving footage needs a rate cap to stay web-sized; static-image configs
     # keep the original CRF-20 encoding.
@@ -779,13 +948,16 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
                 - round(1.6 / contract["embedding"]["sample_seconds"]),
             )
             trail = continuous_projected_path[trail_start : global_state_index + 1]
-            _draw_manifold(
-                background,
-                projected_paths,
-                depth_paths,
-                group_members[groups[scene_index]],
-                trail,
-            )
+            if panel is None:
+                _draw_manifold(
+                    background,
+                    projected_paths,
+                    depth_paths,
+                    group_members[groups[scene_index]],
+                    trail,
+                )
+            else:
+                background = _composite_panel(background, state_space_frames, frame)
             draw = ImageDraw.Draw(background, "RGBA")
             draw.text(
                 (WIDTH - 58, HEIGHT - 46),
@@ -850,6 +1022,15 @@ def render_video(*, config=DEFAULT_CONFIG, recording, summary, output, fps=30):
         "controller_or_motor_output": False,
         "future_activity_shown": False,
     }
+    if panel is not None:
+        metadata.update(
+            {
+                "display": "the connectome demo's 3D state space (state-cloud UMAP of database-image and preset-clip states) under its slowly rotating camera; the film's block-end 2,884-neuron states are placed into it by the demo's 10-nearest-neighbour rule; path so far, causal 1.6-second bright trail and a glowing current state; no activity field is drawn over the source image",
+                "state_space_panel": panel,
+                "camera_motion": True,
+                "renderer": "three.js state-space scene of the connectome demo rendered headless, composited over the footage with Pillow; Inter title",
+            }
+        )
     (output / "visual-metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
     return metadata
 
@@ -863,11 +1044,28 @@ def main():
     run.add_argument("--output", type=Path, required=True)
     run.add_argument("--checkpoint", type=Path, default=DEFAULT_CHECKPOINT)
     run.add_argument("--device", default="cuda")
+    blocks = subparsers.add_parser("block-states")
+    blocks.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
+    blocks.add_argument("--root", type=Path, required=True)
+    blocks.add_argument("--recording", type=Path, required=True, help="directory of the finished run")
+    blocks.add_argument("--output", type=Path, required=True)
+    blocks.add_argument("--checkpoint", type=Path, default=DEFAULT_CHECKPOINT)
+    blocks.add_argument("--device", default="cuda")
+    place = subparsers.add_parser("place")
+    place.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
+    place.add_argument("--block-states", type=Path, required=True)
+    place.add_argument("--demo-work", type=Path, required=True, help="connectome demo work directory (latent.npz, state-cloud.npz)")
+    place.add_argument("--output", type=Path, required=True)
     render = subparsers.add_parser("render")
     render.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     render.add_argument("--recording", type=Path, required=True)
     render.add_argument("--summary", type=Path, required=True)
     render.add_argument("--output", type=Path, required=True)
+    render.add_argument(
+        "--state-space-frames",
+        type=Path,
+        help="panel frames from the website's three.js state-space renderer; replaces the fixed-camera manifold",
+    )
     args = parser.parse_args()
     if args.command == "run":
         result = run_experiment(
@@ -877,12 +1075,29 @@ def main():
             checkpoint=args.checkpoint,
             device=args.device,
         )
+    elif args.command == "block-states":
+        result = record_block_states(
+            config=args.config,
+            root=args.root,
+            recording=args.recording,
+            output=args.output,
+            checkpoint=args.checkpoint,
+            device=args.device,
+        )
+    elif args.command == "place":
+        result = place_in_demo_space(
+            config=args.config,
+            block_states=args.block_states,
+            demo_work=args.demo_work,
+            output=args.output,
+        )
     else:
         result = render_video(
             config=args.config,
             recording=args.recording,
             summary=args.summary,
             output=args.output,
+            state_space_frames=args.state_space_frames,
         )
     print(json.dumps(result, indent=2))
 

@@ -109,3 +109,24 @@ def test_clip_windows_tile_the_displayed_clip(tmp_path):
     ]
     assert {scene["display_group"] for scene in scenes[:8]} == {"clip"}
     assert scenes[-1]["kind"] == "held-frame" and scenes[-1]["start_seconds"] == 0
+
+
+def test_state_space_panel_is_composited_like_the_browser_canvas(tmp_path):
+    from axosim_demo.natural_manifold import HEIGHT, WIDTH, _composite_panel
+
+    panel = np.zeros((HEIGHT, 4, 4), dtype=np.uint8)
+    panel[:, 0] = (0, 0, 0, 0)  # transparent: footage unchanged
+    panel[:, 1] = (255, 255, 255, 255)  # opaque white
+    panel[:, 2] = (100, 0, 0, 100)  # premultiplied red over footage
+    panel[:, 3] = (120, 0, 0, 0)  # additive glow: adds colour, keeps footage
+    Image.fromarray(panel, "RGBA").save(tmp_path / "frame-00000.png")
+    background = Image.new("RGBA", (WIDTH, HEIGHT), (40, 80, 120, 255))
+    result = np.asarray(_composite_panel(background, tmp_path, 0))
+    assert tuple(result[0, -5]) == (40, 80, 120, 255)
+    assert tuple(result[0, -4]) == (40, 80, 120, 255)
+    assert tuple(result[0, -3]) == (255, 255, 255, 255)
+    keep = 1 - 100 / 255
+    assert tuple(result[0, -2, :3]) == tuple(
+        round(v) for v in (100 + 40 * keep, 80 * keep, 120 * keep)
+    )
+    assert tuple(result[0, -1]) == (160, 80, 120, 255)
