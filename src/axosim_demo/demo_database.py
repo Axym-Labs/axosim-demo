@@ -283,16 +283,25 @@ def main():
         command.add_argument("--work", type=Path, required=True)
         command.add_argument("--batch", type=int, default=32)
     run.add_argument("--limit", type=int)
+    videos = sub.add_parser("run-videos", help="simulate the preset clips listed in <work>/clips.json")
+    cloud = sub.add_parser("fit-state-cloud", help="refit only the 3D state cloud (image states + work/videos)")
+    site = sub.add_parser("export-site", help="latent, state cloud, reference statistics and preset lattices")
+    for command in (videos, cloud, site):
+        command.add_argument("--work", type=Path, required=True)
+    site.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.command == "fit-latent":
         result = fit_latent(args.db, args.work, batch=args.batch)
-    else:
+    elif args.command == "run-db":
         result = run_database(args.db, args.work, batch=args.batch, limit=args.limit)
+    elif args.command == "run-videos":
+        result = run_videos(args.work / "clips.json", args.work)
+    elif args.command == "fit-state-cloud":
+        result = fit_state_cloud(args.work)
+    else:
+        result = export_site(args.work, args.output, clips=args.work / "clips.json")
     print(json.dumps(result, indent=2))
 
-
-if __name__ == "__main__":
-    main()
 
 
 def write_test_vectors(db, work, output, *, config=DEFAULT_CONFIG, count=2, blocks=40):
@@ -461,7 +470,22 @@ def fit_umaps(work, *, config=DEFAULT_CONFIG, cloud_image_states=20000, video_ev
     np.save(work / "descriptors-dequantized.npy", descriptors)
     np.save(work / "descriptor-quant.npy", quant)
     report["leave_one_out_top5_overlap"] = transform_overlap(descriptors, np.load(work / "umap10.npy"), cfg["transform_neighbors"])
+    report.update(fit_state_cloud(work, config=config, cloud_image_states=cloud_image_states, video_every=video_every, report=False))
+    (work / "umap-report.json").write_text(json.dumps(report, indent=2))
+    return report
 
+
+def fit_state_cloud(work, *, config=DEFAULT_CONFIG, cloud_image_states=20000, video_every=2, report=True):
+    """3D state-cloud UMAP of image-hold states plus every preset clip in ``work/videos``.
+
+    Refitting only the state cloud (new preset clips) leaves the descriptor UMAPs and
+    the retrieval database untouched.
+    """
+    import umap
+
+    cfg = json.loads(Path(config).read_text())["latent"]
+    seed = cfg["random_seed"]
+    work = Path(work)
     latent_data = np.load(work / "latent.npz")
     rng = np.random.default_rng(seed)
     image_states = latent_data["fit_states_latent"]
@@ -485,9 +509,12 @@ def fit_umaps(work, *, config=DEFAULT_CONFIG, cloud_image_states=20000, video_ev
     coords -= coords.mean(axis=0)
     coords /= np.abs(coords).max()
     np.savez(work / "state-cloud.npz", states=states, quant=state_quant, coords=coords, labels=np.concatenate(labels), video_ids=np.asarray(video_ids))
-    report["state_cloud_points"] = len(states)
-    (work / "umap-report.json").write_text(json.dumps(report, indent=2))
-    return report
+    result = {"state_cloud_points": len(states), "state_cloud_videos": video_ids}
+    if report:
+        path = work / "umap-report.json"
+        previous = json.loads(path.read_text()) if path.exists() else {}
+        path.write_text(json.dumps(previous | result, indent=2))
+    return result
 
 
 def knn_transform(points, reference, coords, k):
@@ -611,3 +638,7 @@ def export_database(db, work, output, *, ids=None, image_root="images", sharded=
     for shard, entries in shards.items():
         (meta_dir / f"{shard}.json").write_text(json.dumps(entries, separators=(",", ":")))
     return {"images": len(chosen)}
+
+
+if __name__ == "__main__":
+    main()

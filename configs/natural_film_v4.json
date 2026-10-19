@@ -1,5 +1,5 @@
 {
-  "scope": "Frozen 3D neuron manifold under a 135-second program: three 40-second licensed clips (FPV drone flight, first-person walk through a graffiti lane, and a third clip chosen by slot_choices) followed by three held public-domain ISS photographs",
+  "scope": "Frozen 3D neuron manifold under a 135-second program: three 40-second licensed clips (FPV drone flight along a forest road, first-person walk through a graffiti lane, koi close-up) followed by three held public-domain ISS photographs",
   "report_scope": "3D neuron-response manifold for frozen AxoSim visual-circuit activity under three moving clips and three held still photographs",
   "vision_config": "configs/flyvis_moving_edge.json",
   "scored_summary": "data/vision_axosim/summary.json",
@@ -105,7 +105,9 @@
         "license": "Pexels license",
         "start_seconds": 3.0,
         "display_seconds": 40.0,
-        "still_seconds": 17.0
+        "still_seconds": 17.0,
+        "demo_title": "Forest road, FPV drone",
+        "demo_theme": "Drone"
       },
       {
         "name": "graffiti-lane",
@@ -119,7 +121,9 @@
         "license": "Pexels license",
         "start_seconds": 21.0,
         "display_seconds": 40.0,
-        "still_seconds": 32.5
+        "still_seconds": 32.5,
+        "demo_title": "Graffiti lane",
+        "demo_theme": "Walking"
       },
       {
         "slot": "film-3",
@@ -136,7 +140,9 @@
             "license": "Pexels license",
             "start_seconds": 6.0,
             "display_seconds": 40.0,
-            "still_seconds": 17.5
+            "still_seconds": 17.5,
+            "demo_title": "Koi",
+            "demo_theme": "Fish"
           },
           "masked-dancers": {
             "name": "masked-dancers",
@@ -150,7 +156,9 @@
             "license": "Pexels license",
             "start_seconds": 2.0,
             "display_seconds": 40.0,
-            "still_seconds": 14.0
+            "still_seconds": 14.0,
+            "demo_title": "Masked dancers",
+            "demo_theme": "Dance"
           }
         }
       }
@@ -210,13 +218,311 @@
     ]
   },
   "slot_choices": {
-    "film-3": null
+    "film-3": "koi"
   },
   "slot_note": "The third film clip is chosen from slot film-3's options: set slot_choices.film-3 to 'koi' or 'masked-dancers', or pass --slot film-3=<option> to the program builder (which records the choice here). web_clip_presets_v4.json's demo-3 slot follows this choice.",
-  "scenes": [],
-  "trajectory_description": "five-second windows of three moving clips (FPV forest road, graffiti lane, third clip) and three held ISS photographs",
-  "program_manifest": null,
-  "program_manifest_sha256": null,
+  "scenes": [
+    {
+      "name": "fpv-forest-road-01",
+      "kind": "video-clip",
+      "display_group": "fpv-forest-road",
+      "path": "data/natural_manifold/program-v4/program/program-01-fpv-forest-road.mp4",
+      "creator": "Lukáš Vaňátko",
+      "page": "https://www.pexels.com/video/dynamic-drone-footage-of-forest-path-at-high-speed-30324643/",
+      "license": "Pexels license",
+      "start_seconds": 0.0,
+      "sha256": "027c6f69a45903263ac4f57b5a13360b5d79cfe5d31b2c7cc644734de57ffca4"
+    },
+    {
+      "name": "fpv-forest-road-02",
+      "kind": "video-clip",
+      "display_group": "fpv-forest-road",
+      "path": "data/natural_manifold/program-v4/program/program-01-fpv-forest-road.mp4",
+      "creator": "Lukáš Vaňátko",
+      "page": "https://www.pexels.com/video/dynamic-drone-footage-of-forest-path-at-high-speed-30324643/",
+      "license": "Pexels license",
+      "start_seconds": 5.0,
+      "sha256": "027c6f69a45903263ac4f57b5a13360b5d79cfe5d31b2c7cc644734de57ffca4"
+    },
+    {
+      "name": "fpv-forest-road-03",
+      "kind": "video-clip",
+      "display_group": "fpv-forest-road",
+      "path": "data/natural_manifold/program-v4/program/program-01-fpv-forest-road.mp4",
+      "creator": "Lukáš Vaňátko",
+      "page": "https://www.pexels.com/video/dynamic-drone-footage-of-forest-path-at-high-speed-30324643/",
+      "license": "Pexels license",
+      "start_seconds": 10.0,
+      "sha256": "027c6f69a45903263ac4f57b5a13360b5d79cfe5d31b2c7cc644734de57ffca4"
+    },
+    {
+      "name": "fpv-forest-road-04",
+      "kind": "video-clip",
+      "display_group": "fpv-forest-road",
+      "path": "data/natural_manifold/program-v4/program/program-01-fpv-forest-road.mp4",
+      "creator": "Lukáš Vaňátko",
+      "page": "https://www.pexels.com/video/dynamic-drone-footage-of-forest-path-at-high-speed-30324643/",
+      "license": "Pexels license",
+      "start_seconds": 15.0,
+      "sha256": "027c6f69a45903263ac4f57b5a13360b5d79cfe5d31b2c7cc644734de57ffca4"
+    },
+    {
+      "name": "fpv-forest-road-05",
+      "kind": "video-clip",
+      "display_group": "fpv-forest-road",
+      "path": "data/natural_manifold/program-v4/program/program-01-fpv-forest-road.mp4",
+      "creator": "Lukáš Vaňátko",
+      "page": "https://www.pexels.com/video/dynamic-drone-footage-of-forest-path-at-high-speed-30324643/",
+      "license": "Pexels license",
+      "start_seconds": 20.0,
+      "sha256": "027c6f69a45903263ac4f57b5a13360b5d79cfe5d31b2c7cc644734de57ffca4"
+    },
+    {
+      "name": "fpv-forest-road-06",
+      "kind": "video-clip",
+      "display_group": "fpv-forest-road",
+      "path": "data/natural_manifold/program-v4/program/program-01-fpv-forest-road.mp4",
+      "creator": "Lukáš Vaňátko",
+      "page": "https://www.pexels.com/video/dynamic-drone-footage-of-forest-path-at-high-speed-30324643/",
+      "license": "Pexels license",
+      "start_seconds": 25.0,
+      "sha256": "027c6f69a45903263ac4f57b5a13360b5d79cfe5d31b2c7cc644734de57ffca4"
+    },
+    {
+      "name": "fpv-forest-road-07",
+      "kind": "video-clip",
+      "display_group": "fpv-forest-road",
+      "path": "data/natural_manifold/program-v4/program/program-01-fpv-forest-road.mp4",
+      "creator": "Lukáš Vaňátko",
+      "page": "https://www.pexels.com/video/dynamic-drone-footage-of-forest-path-at-high-speed-30324643/",
+      "license": "Pexels license",
+      "start_seconds": 30.0,
+      "sha256": "027c6f69a45903263ac4f57b5a13360b5d79cfe5d31b2c7cc644734de57ffca4"
+    },
+    {
+      "name": "fpv-forest-road-08",
+      "kind": "video-clip",
+      "display_group": "fpv-forest-road",
+      "path": "data/natural_manifold/program-v4/program/program-01-fpv-forest-road.mp4",
+      "creator": "Lukáš Vaňátko",
+      "page": "https://www.pexels.com/video/dynamic-drone-footage-of-forest-path-at-high-speed-30324643/",
+      "license": "Pexels license",
+      "start_seconds": 35.0,
+      "sha256": "027c6f69a45903263ac4f57b5a13360b5d79cfe5d31b2c7cc644734de57ffca4"
+    },
+    {
+      "name": "graffiti-lane-01",
+      "kind": "video-clip",
+      "display_group": "graffiti-lane",
+      "path": "data/natural_manifold/program-v4/program/program-02-graffiti-lane.mp4",
+      "creator": "Pat Whelen",
+      "page": "https://www.pexels.com/video/an-alleyway-full-of-graffiti-art-on-wall-5658058/",
+      "license": "Pexels license",
+      "start_seconds": 0.0,
+      "sha256": "c6317a9c91425791cc4546eb936e11a67c757f30d91240814268d74d42114307"
+    },
+    {
+      "name": "graffiti-lane-02",
+      "kind": "video-clip",
+      "display_group": "graffiti-lane",
+      "path": "data/natural_manifold/program-v4/program/program-02-graffiti-lane.mp4",
+      "creator": "Pat Whelen",
+      "page": "https://www.pexels.com/video/an-alleyway-full-of-graffiti-art-on-wall-5658058/",
+      "license": "Pexels license",
+      "start_seconds": 5.0,
+      "sha256": "c6317a9c91425791cc4546eb936e11a67c757f30d91240814268d74d42114307"
+    },
+    {
+      "name": "graffiti-lane-03",
+      "kind": "video-clip",
+      "display_group": "graffiti-lane",
+      "path": "data/natural_manifold/program-v4/program/program-02-graffiti-lane.mp4",
+      "creator": "Pat Whelen",
+      "page": "https://www.pexels.com/video/an-alleyway-full-of-graffiti-art-on-wall-5658058/",
+      "license": "Pexels license",
+      "start_seconds": 10.0,
+      "sha256": "c6317a9c91425791cc4546eb936e11a67c757f30d91240814268d74d42114307"
+    },
+    {
+      "name": "graffiti-lane-04",
+      "kind": "video-clip",
+      "display_group": "graffiti-lane",
+      "path": "data/natural_manifold/program-v4/program/program-02-graffiti-lane.mp4",
+      "creator": "Pat Whelen",
+      "page": "https://www.pexels.com/video/an-alleyway-full-of-graffiti-art-on-wall-5658058/",
+      "license": "Pexels license",
+      "start_seconds": 15.0,
+      "sha256": "c6317a9c91425791cc4546eb936e11a67c757f30d91240814268d74d42114307"
+    },
+    {
+      "name": "graffiti-lane-05",
+      "kind": "video-clip",
+      "display_group": "graffiti-lane",
+      "path": "data/natural_manifold/program-v4/program/program-02-graffiti-lane.mp4",
+      "creator": "Pat Whelen",
+      "page": "https://www.pexels.com/video/an-alleyway-full-of-graffiti-art-on-wall-5658058/",
+      "license": "Pexels license",
+      "start_seconds": 20.0,
+      "sha256": "c6317a9c91425791cc4546eb936e11a67c757f30d91240814268d74d42114307"
+    },
+    {
+      "name": "graffiti-lane-06",
+      "kind": "video-clip",
+      "display_group": "graffiti-lane",
+      "path": "data/natural_manifold/program-v4/program/program-02-graffiti-lane.mp4",
+      "creator": "Pat Whelen",
+      "page": "https://www.pexels.com/video/an-alleyway-full-of-graffiti-art-on-wall-5658058/",
+      "license": "Pexels license",
+      "start_seconds": 25.0,
+      "sha256": "c6317a9c91425791cc4546eb936e11a67c757f30d91240814268d74d42114307"
+    },
+    {
+      "name": "graffiti-lane-07",
+      "kind": "video-clip",
+      "display_group": "graffiti-lane",
+      "path": "data/natural_manifold/program-v4/program/program-02-graffiti-lane.mp4",
+      "creator": "Pat Whelen",
+      "page": "https://www.pexels.com/video/an-alleyway-full-of-graffiti-art-on-wall-5658058/",
+      "license": "Pexels license",
+      "start_seconds": 30.0,
+      "sha256": "c6317a9c91425791cc4546eb936e11a67c757f30d91240814268d74d42114307"
+    },
+    {
+      "name": "graffiti-lane-08",
+      "kind": "video-clip",
+      "display_group": "graffiti-lane",
+      "path": "data/natural_manifold/program-v4/program/program-02-graffiti-lane.mp4",
+      "creator": "Pat Whelen",
+      "page": "https://www.pexels.com/video/an-alleyway-full-of-graffiti-art-on-wall-5658058/",
+      "license": "Pexels license",
+      "start_seconds": 35.0,
+      "sha256": "c6317a9c91425791cc4546eb936e11a67c757f30d91240814268d74d42114307"
+    },
+    {
+      "name": "koi-01",
+      "kind": "video-clip",
+      "display_group": "koi",
+      "path": "data/natural_manifold/program-v4/program/program-03-koi.mp4",
+      "creator": "Brixiv",
+      "page": "https://www.pexels.com/video/close-up-of-koi-fish-swimming-9106684/",
+      "license": "Pexels license",
+      "start_seconds": 0.0,
+      "sha256": "33572d14a70d034e7bd5282dfb8fd43477fcf5056f101814c27de21d8a0bbb5c"
+    },
+    {
+      "name": "koi-02",
+      "kind": "video-clip",
+      "display_group": "koi",
+      "path": "data/natural_manifold/program-v4/program/program-03-koi.mp4",
+      "creator": "Brixiv",
+      "page": "https://www.pexels.com/video/close-up-of-koi-fish-swimming-9106684/",
+      "license": "Pexels license",
+      "start_seconds": 5.0,
+      "sha256": "33572d14a70d034e7bd5282dfb8fd43477fcf5056f101814c27de21d8a0bbb5c"
+    },
+    {
+      "name": "koi-03",
+      "kind": "video-clip",
+      "display_group": "koi",
+      "path": "data/natural_manifold/program-v4/program/program-03-koi.mp4",
+      "creator": "Brixiv",
+      "page": "https://www.pexels.com/video/close-up-of-koi-fish-swimming-9106684/",
+      "license": "Pexels license",
+      "start_seconds": 10.0,
+      "sha256": "33572d14a70d034e7bd5282dfb8fd43477fcf5056f101814c27de21d8a0bbb5c"
+    },
+    {
+      "name": "koi-04",
+      "kind": "video-clip",
+      "display_group": "koi",
+      "path": "data/natural_manifold/program-v4/program/program-03-koi.mp4",
+      "creator": "Brixiv",
+      "page": "https://www.pexels.com/video/close-up-of-koi-fish-swimming-9106684/",
+      "license": "Pexels license",
+      "start_seconds": 15.0,
+      "sha256": "33572d14a70d034e7bd5282dfb8fd43477fcf5056f101814c27de21d8a0bbb5c"
+    },
+    {
+      "name": "koi-05",
+      "kind": "video-clip",
+      "display_group": "koi",
+      "path": "data/natural_manifold/program-v4/program/program-03-koi.mp4",
+      "creator": "Brixiv",
+      "page": "https://www.pexels.com/video/close-up-of-koi-fish-swimming-9106684/",
+      "license": "Pexels license",
+      "start_seconds": 20.0,
+      "sha256": "33572d14a70d034e7bd5282dfb8fd43477fcf5056f101814c27de21d8a0bbb5c"
+    },
+    {
+      "name": "koi-06",
+      "kind": "video-clip",
+      "display_group": "koi",
+      "path": "data/natural_manifold/program-v4/program/program-03-koi.mp4",
+      "creator": "Brixiv",
+      "page": "https://www.pexels.com/video/close-up-of-koi-fish-swimming-9106684/",
+      "license": "Pexels license",
+      "start_seconds": 25.0,
+      "sha256": "33572d14a70d034e7bd5282dfb8fd43477fcf5056f101814c27de21d8a0bbb5c"
+    },
+    {
+      "name": "koi-07",
+      "kind": "video-clip",
+      "display_group": "koi",
+      "path": "data/natural_manifold/program-v4/program/program-03-koi.mp4",
+      "creator": "Brixiv",
+      "page": "https://www.pexels.com/video/close-up-of-koi-fish-swimming-9106684/",
+      "license": "Pexels license",
+      "start_seconds": 30.0,
+      "sha256": "33572d14a70d034e7bd5282dfb8fd43477fcf5056f101814c27de21d8a0bbb5c"
+    },
+    {
+      "name": "koi-08",
+      "kind": "video-clip",
+      "display_group": "koi",
+      "path": "data/natural_manifold/program-v4/program/program-03-koi.mp4",
+      "creator": "Brixiv",
+      "page": "https://www.pexels.com/video/close-up-of-koi-fish-swimming-9106684/",
+      "license": "Pexels license",
+      "start_seconds": 35.0,
+      "sha256": "33572d14a70d034e7bd5282dfb8fd43477fcf5056f101814c27de21d8a0bbb5c"
+    },
+    {
+      "name": "manicouagan-crater",
+      "kind": "held-frame",
+      "display_group": "manicouagan-crater",
+      "path": "data/natural_manifold/program-v4/program/program-04-manicouagan-crater.mp4",
+      "creator": "NASA (ISS Expedition 38 crew)",
+      "page": "https://images.nasa.gov/details/iss038e025350",
+      "license": "public domain (NASA media; no copyright in the United States)",
+      "start_seconds": 0.0,
+      "sha256": "e627ff0645a95dfaf234a55e6ce1aca1c0bae283e0c5fba76d3fa92d53e57b76"
+    },
+    {
+      "name": "richat-structure",
+      "kind": "held-frame",
+      "display_group": "richat-structure",
+      "path": "data/natural_manifold/program-v4/program/program-05-richat-structure.mp4",
+      "creator": "NASA (ISS Expedition 69 crew)",
+      "page": "https://images.nasa.gov/details/iss069e005471",
+      "license": "public domain (NASA media; no copyright in the United States)",
+      "start_seconds": 0.0,
+      "sha256": "22a6f053486d9914d8f95d7068c989d96a65dc18e94e1c0121b202d3f299ba54"
+    },
+    {
+      "name": "typhoon-eye",
+      "kind": "held-frame",
+      "display_group": "typhoon-eye",
+      "path": "data/natural_manifold/program-v4/program/program-06-typhoon-eye.mp4",
+      "creator": "NASA (ISS Expedition 43 crew; photographed by Samantha Cristoforetti per NASA metadata)",
+      "page": "https://images.nasa.gov/details/iss043e078169",
+      "license": "public domain (NASA media; no copyright in the United States)",
+      "start_seconds": 0.0,
+      "sha256": "2eea9515450ef8408f3dc9f1913f5abb2ea43cf0b2b279449fbf6a4a2dfb23f8"
+    }
+  ],
+  "trajectory_description": "five-second windows of three moving clips (FPV forest road, graffiti lane, koi) and three held ISS photographs",
+  "program_manifest": "data/natural_manifold/program-v4/program/program-manifest.json",
+  "program_manifest_sha256": "9cd37ee2c86957a999960f6874a23b58c9ebe3bf7256b74b1e86ebea288e0e55",
   "display_smoothing_seconds": 0.04,
   "encoding": {
     "crf": 23,
