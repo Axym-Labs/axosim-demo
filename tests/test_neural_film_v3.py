@@ -130,3 +130,33 @@ def test_state_space_panel_is_composited_like_the_browser_canvas(tmp_path):
         round(v) for v in (100 + 40 * keep, 80 * keep, 120 * keep)
     )
     assert tuple(result[0, -1]) == (160, 80, 120, 255)
+
+
+def test_slot_placeholders_resolve_from_one_film_choice():
+    film = [
+        {"name": "a"},
+        {
+            "slot": "film-3",
+            "options": {"koi": {"name": "koi"}, "dancers": {"name": "dancers"}},
+        },
+    ]
+    presets = [
+        {
+            "slot": "demo-3",
+            "follows": "film-3",
+            "options": {"dancers": {"name": "koi"}, "koi": {"name": "swirl"}},
+        }
+    ]
+    assert [c["name"] for c in film_v3.resolve_slots(film, {"film-3": "koi"})] == [
+        "a",
+        "koi",
+    ]
+    assert [c["name"] for c in film_v3.resolve_slots(presets, {"film-3": "koi"})] == [
+        "swirl"
+    ]
+    assert [
+        c["name"] for c in film_v3.resolve_slots(presets, {"film-3": "dancers"})
+    ] == ["koi"]
+    assert film_v3.resolve_slots([{"name": "a"}], None) == [{"name": "a"}]
+    with pytest.raises(ValueError, match="film-3"):
+        film_v3.resolve_slots(film, {"film-3": None})

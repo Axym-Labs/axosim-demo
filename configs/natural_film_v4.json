@@ -1,0 +1,225 @@
+{
+  "scope": "Frozen 3D neuron manifold under a 135-second program: three 40-second licensed clips (FPV drone flight, first-person walk through a graffiti lane, and a third clip chosen by slot_choices) followed by three held public-domain ISS photographs",
+  "report_scope": "3D neuron-response manifold for frozen AxoSim visual-circuit activity under three moving clips and three held still photographs",
+  "vision_config": "configs/flyvis_moving_edge.json",
+  "scored_summary": "data/vision_axosim/summary.json",
+  "source_dt_seconds": 0.005,
+  "duration_seconds": 6.0,
+  "warmup_seconds": 1.0,
+  "record_layers": [
+    "L1",
+    "Mi1",
+    "T4c",
+    "T5c"
+  ],
+  "retinal_normalization": {
+    "mean": 0.5,
+    "standard_deviation": 0.15,
+    "clip": [
+      0.0,
+      1.0
+    ],
+    "control": "constant mean-gray field"
+  },
+  "classification": {
+    "sample_seconds": 0.025,
+    "train_seconds": [
+      1.0,
+      2.5
+    ],
+    "test_seconds": [
+      3.0,
+      4.5
+    ],
+    "logistic_C": 1.0,
+    "minimum_stimulus_balanced_accuracy": 0.75,
+    "minimum_advantage_over_uniform": 0.1
+  },
+  "embedding": {
+    "sample_seconds": 0.025,
+    "pca_components": 50,
+    "n_neighbors": 45,
+    "min_dist": 0.2,
+    "metric": "cosine",
+    "random_seed": 20260930,
+    "trustworthiness_neighbors": 15
+  },
+  "dynamics": {
+    "transition_approach_seconds": [
+      5.0,
+      5.8
+    ],
+    "post_transition_seconds": [
+      1.0,
+      1.8
+    ],
+    "reference_orbit_seconds": [
+      3.5,
+      4.5
+    ],
+    "oscillation_seconds": [
+      1.8,
+      4.8
+    ],
+    "minimum_orbit_approach_ratio": 1.25,
+    "maximum_peak_frequency_drift_hz": 0.5,
+    "minimum_peak_power_fraction": 0.35,
+    "amplitude_ratio": [
+      0.75,
+      1.35
+    ],
+    "scene_kinds": [
+      "held-frame"
+    ],
+    "scope_note": "settling and oscillation are scored only for the three held stills, where the input is constant after each transition; the moving clips have no constant-input interval"
+  },
+  "display_fps": 30,
+  "program": {
+    "output_dir": "data/natural_manifold/program-v4/program",
+    "fps": 30,
+    "resolution": [
+      1280,
+      720
+    ],
+    "transition_seconds": 1.0,
+    "stimulus_crf": 16,
+    "web_export": {
+      "resolution": [
+        1280,
+        720
+      ],
+      "crf": 24,
+      "maxrate_kbps": 1500,
+      "jpeg_quality": 88
+    },
+    "clips": [
+      {
+        "name": "fpv-forest-road",
+        "title": "FPV flight along a forest road",
+        "theme": "drone",
+        "path": "data/natural_manifold/program-v4/sources/pexels-30324643.mp4",
+        "source_sha256": "39f6cf15e20786d05493cbf747e8bdd1d3d0f18975aefde68c5b5416bc992325",
+        "url": "https://videos.pexels.com/video-files/30324643/12999305_1920_1080_30fps.mp4",
+        "page": "https://www.pexels.com/video/dynamic-drone-footage-of-forest-path-at-high-speed-30324643/",
+        "creator": "Lukáš Vaňátko",
+        "license": "Pexels license",
+        "start_seconds": 3.0,
+        "display_seconds": 40.0,
+        "still_seconds": 17.0
+      },
+      {
+        "name": "graffiti-lane",
+        "title": "Walk down a graffiti-covered lane",
+        "theme": "walking",
+        "path": "data/natural_manifold/program-v4/sources/pexels-5658058.mp4",
+        "source_sha256": "306e3d5f66c320fcc1b25f92b4ce5da89851682b6f01c9cdcb70369152280b7a",
+        "url": "https://videos.pexels.com/video-files/5658058/5658058-hd_1920_1080_24fps.mp4",
+        "page": "https://www.pexels.com/video/an-alleyway-full-of-graffiti-art-on-wall-5658058/",
+        "creator": "Pat Whelen",
+        "license": "Pexels license",
+        "start_seconds": 21.0,
+        "display_seconds": 40.0,
+        "still_seconds": 32.5
+      },
+      {
+        "slot": "film-3",
+        "options": {
+          "koi": {
+            "name": "koi",
+            "title": "Koi turning just under the surface",
+            "theme": "fish",
+            "path": "data/natural_manifold/program-v4/sources/pexels-9106684.mp4",
+            "source_sha256": "81ad708c284ec467dd69528e1f6b19045c5b27f9a5fe69a7edde164b7833fddc",
+            "url": "https://videos.pexels.com/video-files/9106684/9106684-hd_1920_1080_24fps.mp4",
+            "page": "https://www.pexels.com/video/close-up-of-koi-fish-swimming-9106684/",
+            "creator": "Brixiv",
+            "license": "Pexels license",
+            "start_seconds": 6.0,
+            "display_seconds": 40.0,
+            "still_seconds": 17.5
+          },
+          "masked-dancers": {
+            "name": "masked-dancers",
+            "title": "Masked dancers in red and yellow costumes",
+            "theme": "dance / festival",
+            "path": "data/natural_manifold/program-v4/sources/pexels-17053810.mp4",
+            "source_sha256": "1b0c60f76028debbd03fe86dc71bb6d65986847a75425341b9a88f27f5c5598d",
+            "url": "https://videos.pexels.com/video-files/17053810/17053810-hd_1920_1080_30fps.mp4",
+            "page": "https://www.pexels.com/video/a-group-of-people-in-costumes-dancing-on-a-street-17053810/",
+            "creator": "Janeth Charris",
+            "license": "Pexels license",
+            "start_seconds": 2.0,
+            "display_seconds": 40.0,
+            "still_seconds": 14.0
+          }
+        }
+      }
+    ],
+    "stills": [
+      {
+        "name": "manicouagan-crater",
+        "title": "Manicouagan impact crater, Quebec",
+        "nasa_id": "iss038e025350",
+        "path": "data/natural_manifold/program-v3/sources/nasa-iss038e025350.jpg",
+        "source_sha256": "bae92ebbf11dbab4d8d1da40c4c70f575d20818beaef470167eea4f65d434020",
+        "url": "https://images-assets.nasa.gov/image/iss038e025350/iss038e025350~orig.jpg",
+        "page": "https://images.nasa.gov/details/iss038e025350",
+        "creator": "NASA (ISS Expedition 38 crew)",
+        "license": "public domain (NASA media; no copyright in the United States)",
+        "crop_box": [
+          0,
+          252,
+          4256,
+          2646
+        ]
+      },
+      {
+        "name": "richat-structure",
+        "title": "Richat Structure ('Eye of the Sahara'), Mauritania",
+        "nasa_id": "iss069e005471",
+        "path": "data/natural_manifold/program-v3/sources/nasa-iss069e005471.jpg",
+        "source_sha256": "b123d1ae46f7b19d43120005c6a02a0ff09f76eddf878908dd74b93b7174ca29",
+        "url": "https://images-assets.nasa.gov/image/iss069e005471/iss069e005471~orig.jpg",
+        "page": "https://images.nasa.gov/details/iss069e005471",
+        "creator": "NASA (ISS Expedition 69 crew)",
+        "license": "public domain (NASA media; no copyright in the United States)",
+        "crop_box": [
+          802,
+          328,
+          5442,
+          2938
+        ]
+      },
+      {
+        "name": "typhoon-eye",
+        "title": "Eye of Typhoon Maysak, 31 March 2015",
+        "nasa_id": "iss043e078169",
+        "path": "data/natural_manifold/program-v3/sources/nasa-iss043e078169.jpg",
+        "source_sha256": "2c309368bb9f9c7d259809b965dfe8f14c7f623b5ac0867aba19dbaae45ccb82",
+        "url": "https://images-assets.nasa.gov/image/iss043e078169/iss043e078169~orig.jpg",
+        "page": "https://images.nasa.gov/details/iss043e078169",
+        "creator": "NASA (ISS Expedition 43 crew; photographed by Samantha Cristoforetti per NASA metadata)",
+        "license": "public domain (NASA media; no copyright in the United States)",
+        "crop_box": [
+          0,
+          90,
+          4928,
+          2862
+        ]
+      }
+    ]
+  },
+  "slot_choices": {
+    "film-3": null
+  },
+  "slot_note": "The third film clip is chosen from slot film-3's options: set slot_choices.film-3 to 'koi' or 'masked-dancers', or pass --slot film-3=<option> to the program builder (which records the choice here). web_clip_presets_v4.json's demo-3 slot follows this choice.",
+  "scenes": [],
+  "trajectory_description": "five-second windows of three moving clips (FPV forest road, graffiti lane, third clip) and three held ISS photographs",
+  "program_manifest": null,
+  "program_manifest_sha256": null,
+  "display_smoothing_seconds": 0.04,
+  "encoding": {
+    "crf": 23,
+    "maxrate_kbps": 2200
+  }
+}

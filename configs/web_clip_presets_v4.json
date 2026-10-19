@@ -1,0 +1,68 @@
+{
+  "note": "Web-only preset clips for the interactive demo v4; not part of the film program. The film's three clips are also demo presets. Slot demo-3 follows the film's film-3 choice: koi in the demo when the dancers go into the film, the liquid swirl when koi goes into the film. still_seconds is the source time of the image-preset still.",
+  "follows_config": "configs/natural_film_v4.json",
+  "clips": [
+    {
+      "name": "sea-turtle",
+      "title": "Sea turtle swimming over a reef",
+      "theme": "underwater",
+      "path": "data/natural_manifold/program-v4/sources/pexels-1456996.mp4",
+      "source_sha256": "64ddb0889e6c942ba9ef56586f8238b3ba6b86b43e2dff4f26bf14464207f01b",
+      "url": "https://videos.pexels.com/video-files/1456996/1456996-hd_1920_1080_30fps.mp4",
+      "page": "https://www.pexels.com/video/turtle-underwater-1456996/",
+      "creator": "Tom Fisk",
+      "license": "Pexels license",
+      "start_seconds": 1.5,
+      "display_seconds": 25.0,
+      "still_seconds": 2.5
+    },
+    {
+      "name": "bumblebee-landing",
+      "title": "Bumblebee landing on a wildflower",
+      "theme": "insects",
+      "path": "data/natural_manifold/program-v4/sources/pexels-7409559.mp4",
+      "source_sha256": "fec5bfff583ec3dd9bd99302c4cfd143f8d655b0ce9085638c727adbc627d4de",
+      "url": "https://videos.pexels.com/video-files/7409559/7409559-hd_1920_1080_24fps.mp4",
+      "page": "https://www.pexels.com/video/close-up-video-of-a-bumblebee-7409559/",
+      "creator": "Nicky Pe",
+      "license": "Pexels license",
+      "start_seconds": 1.0,
+      "display_seconds": 25.0,
+      "still_seconds": 6.0
+    },
+    {
+      "slot": "demo-3",
+      "follows": "film-3",
+      "options": {
+        "masked-dancers": {
+          "name": "koi",
+          "title": "Koi turning just under the surface",
+          "theme": "fish",
+          "path": "data/natural_manifold/program-v4/sources/pexels-9106684.mp4",
+          "source_sha256": "81ad708c284ec467dd69528e1f6b19045c5b27f9a5fe69a7edde164b7833fddc",
+          "url": "https://videos.pexels.com/video-files/9106684/9106684-hd_1920_1080_24fps.mp4",
+          "page": "https://www.pexels.com/video/close-up-of-koi-fish-swimming-9106684/",
+          "creator": "Brixiv",
+          "license": "Pexels license",
+          "start_seconds": 10.0,
+          "display_seconds": 25.0,
+          "still_seconds": 17.5
+        },
+        "koi": {
+          "name": "liquid-swirl",
+          "title": "Swirling multicolour liquid",
+          "theme": "abstract colour",
+          "path": "data/natural_manifold/program-v4/sources/pexels-11272512.mp4",
+          "source_sha256": "db464801d950f3c4e4ae607d4e3f6188a0dd50c3405b071613f4ae12aaa44011",
+          "url": "https://videos.pexels.com/video-files/11272512/11272512-hd_1920_1080_24fps.mp4",
+          "page": "https://www.pexels.com/video/multicolor-liquid-mix-swirling-in-slow-motion-11272512/",
+          "creator": "StefWithAnF",
+          "license": "Pexels license",
+          "start_seconds": 12.0,
+          "display_seconds": 25.0,
+          "still_seconds": 34.0
+        }
+      }
+    }
+  ]
+}

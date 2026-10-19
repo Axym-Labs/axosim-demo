@@ -222,8 +222,34 @@ def export_web_clip(clip, program, path: Path, *, size, crf, maxrate_kbps):
         source.close()
 
 
-def program_items(program):
-    items = [{**clip, "kind": "video-clip"} for clip in program["clips"]]
+def resolve_slots(clips, choices):
+    """Replace slot placeholders by the chosen option.
+
+    A placeholder is ``{"slot": name, "options": {option: clip}}``; a preset
+    slot may instead ``follow`` a film slot, keying its options by the film's
+    choice. Configs without slots pass through unchanged.
+    """
+    resolved = []
+    for clip in clips:
+        if "slot" not in clip:
+            resolved.append(clip)
+            continue
+        key = clip.get("follows", clip["slot"])
+        choice = (choices or {}).get(key)
+        if choice not in clip["options"]:
+            raise ValueError(
+                f"Slot {clip['slot']} needs slot_choices[{key!r}] or --slot {key}=<option>,"
+                f" one of {sorted(clip['options'])} (got {choice!r})"
+            )
+        resolved.append(clip["options"][choice])
+    return resolved
+
+
+def program_items(program, choices=None):
+    items = [
+        {**clip, "kind": "video-clip"}
+        for clip in resolve_slots(program["clips"], choices)
+    ]
     items += [{**still, "kind": "held-frame"} for still in program["stills"]]
     return items
 
@@ -291,7 +317,7 @@ def validated_items(contract):
         or contract["warmup_seconds"] != CONTEXT_SECONDS
     ):
         raise ValueError("The program layout assumes 6-second windows with 1 s context")
-    items = program_items(program)
+    items = program_items(program, contract.get("slot_choices"))
     for item in items:
         if sha256(Path(item["path"])) != item["source_sha256"]:
             raise ValueError(f"Source hash mismatch for {item['name']}")
@@ -373,8 +399,18 @@ def main() -> None:
         action="store_true",
         help="only export web clips; keep the program",
     )
+    parser.add_argument(
+        "--slot",
+        action="append",
+        default=[],
+        metavar="NAME=OPTION",
+        help="choose a slot option (e.g. film-3=koi); recorded in the config's slot_choices",
+    )
     args = parser.parse_args()
     contract = json.loads(args.config.read_text())
+    for choice in args.slot:
+        name, option = choice.split("=", 1)
+        contract.setdefault("slot_choices", {})[name] = option
     items = validated_items(contract)
     if not args.skip_build:
         build_program(contract, items, args.config)
@@ -383,7 +419,10 @@ def main() -> None:
         if args.presets:
             extra = [
                 {**clip, "kind": "video-clip"}
-                for clip in json.loads(args.presets.read_text())["clips"]
+                for clip in resolve_slots(
+                    json.loads(args.presets.read_text())["clips"],
+                    contract.get("slot_choices"),
+                )
             ]
             for clip in extra:
                 if sha256(Path(clip["path"])) != clip["source_sha256"]:
