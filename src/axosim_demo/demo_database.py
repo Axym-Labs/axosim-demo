@@ -574,6 +574,26 @@ def reference_quantiles(work):
     }
 
 
+def export_video_paths(work, output, clips, *, neighbors=10):
+    """Precomputed preset trajectories: videos/<id>.path.bin, float32 (blocks, 3).
+
+    Each block's latent state from `run_videos` is placed into the exported state cloud
+    exactly as the browser worker places live states (inverse-distance k-NN, k=10), so the
+    page can replay a preset without simulating it. Display smoothing stays in the page.
+    """
+    cloud = np.load(Path(work) / "state-cloud.npz")
+    reference, coords = cloud["states"].astype(np.float32), cloud["coords"].astype(np.float32)
+    videos = Path(output) / "videos"
+    videos.mkdir(parents=True, exist_ok=True)
+    blocks = {}
+    for clip in json.loads(Path(clips).read_text()):
+        z = np.load(Path(work) / "videos" / f"{clip['id']}.npz")["latent"].astype(np.float32)
+        path = np.concatenate([knn_transform(z[s : s + 2000], reference, coords, neighbors) for s in range(0, len(z), 2000)])
+        (videos / f"{clip['id']}.path.bin").write_bytes(path.astype("<f4").tobytes())
+        blocks[clip["id"]] = len(path)
+    return blocks
+
+
 def export_site(work, output, *, clips=None):
     """Bundled site assets: latent, state cloud, reference statistics, preset lattices."""
     output = Path(output)
@@ -600,6 +620,9 @@ def export_site(work, output, *, clips=None):
             data = np.load(Path(work) / "videos" / f"{clip['id']}.npz")
             (videos / f"{clip['id']}.lattice.bin").write_bytes(data["raw"].astype("<u2").tobytes())
             presets.append({**{k: v for k, v in clip.items() if k != "path"}, "frames": len(data["raw"]), "fps": float(data["fps"])})
+        path_blocks = export_video_paths(work, output, clips)
+        for preset in presets:
+            preset["path_blocks"] = path_blocks[preset["id"]]
         (videos / "presets.json").write_text(json.dumps(presets, indent=2))
     return {"output": str(output)}
 
